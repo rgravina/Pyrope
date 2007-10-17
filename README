@@ -1,0 +1,44 @@
+*******************************************************************************
+*                                 Pyrope                                      *
+*******************************************************************************
+
+* Introduction *
+
+Pyrope is a remote GUI framework, built using wxPython and Twisted. Programmers 
+can use the framework to program their client/server GUI-based applications in 
+much the same way as they would a standalone GUI application. 
+
+For the programmer: it saves them the hassle of writing clients and servers. 
+Concentrate on the application you are trying to build, and let Pyrope remote 
+the UI for you!
+
+For ther user: You can access your applications from any computer that has the 
+Pyrope client installed - all the benifits of web-based applications, without 
+a user interface that sucks! 
+
+* About the name *
+
+Many programming tools are named after precious stones or minerals - the Ruby 
+programming language, Quartz in Mac OSX etc.
+
+This project was inspired (in part) by the ease of application development in 
+the Jade programming lanaguage (yes, another stone)...
+
+So why Pyrope? Many Python projects begin with "Py", and Pyrope is a mineral.
+You could go one further and say that Pyrope extends your GUI out to remote 
+computers but allows your easy access to it, as it if was connected by a 
+"rope"... but that might be stretching things a little.
+
+* About the authour *
+
+My name is Robert Gravina. I was looking for a way to simplfiy the way 
+applications are built and deployed over networks. Why are web applications 
+so popular despite the UI straightjacket they present users, designers and 
+developers? I think the answer is simple - users like the fact that can access
+their applications from their web browser and developers like the fact that 
+they don't have to develop the client software. Pyrope is an attempt to 
+bring this to the world of desktop applications.
+
+* Acknowlegements *
+Pyrope would not have been possible wihout wxWidgets and wxPython, Twisted 
+Python, the Python langague itself.
