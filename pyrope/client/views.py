@@ -1,24 +1,7 @@
 import wx
-from mvp import View
-import utils
+from eskimoapps.ui.mvp import View
+from eskimoapps.utils.crossplatform import platformSpecificPath
 from pyrope.config import *
-
-class ApplicationView(wx.App, View):
-    def OnInit(self):
-        #setup wxApp instance
-        wx.GetApp().SetAppName("Pyrope")    
-        wx.SystemOptions.SetOptionInt("mac.window-plain-transition", 1)
-        return True
-    
-    def displayError(self, title=u"Error", msg=u""):
-        dlg = wx.MessageDialog(None, msg, title, wx.OK | wx.ICON_ERROR)
-        dlg.ShowModal()
-        dlg.Destroy()
-        
-    def displayMessage(self, title, msg):
-        dlg = wx.MessageDialog(None, msg, title, wx.OK | wx.ICON_INFORMATION)
-        dlg.ShowModal()
-        dlg.Destroy()
 
 class LogonView(wx.Frame, View):
     def __init__(self, parent):
@@ -41,12 +24,10 @@ class LogonView(wx.Frame, View):
         boxButtons = wx.BoxSizer(wx.HORIZONTAL)
         self.btnLogon = wx.Button(self, wx.ID_OK, "Connect")
         self.btnLogon.SetDefault()
-        self.btnCancel = wx.Button(self, wx.ID_CANCEL, "Cancel")
-        boxButtons.Add(self.btnCancel, 0, wx.ALIGN_CENTRE|wx.ALL, 5)
         boxButtons.Add(self.btnLogon, 0, wx.ALIGN_CENTRE|wx.ALL, 5)
 
         sizerMain = wx.BoxSizer(wx.VERTICAL)
-        topImage = wx.Image(utils.opj("images/pyrope.png"), wx.BITMAP_TYPE_PNG).ConvertToBitmap()
+        topImage = wx.Image(platformSpecificPath("images/pyrope.png"), wx.BITMAP_TYPE_PNG).ConvertToBitmap()
         wx.StaticBitmap(self, -1, topImage, (0, 0), (topImage.GetWidth(), topImage.GetHeight()))
         sizerMain.Add((-1,topImage.GetHeight()+25))
         sizerBottom = wx.BoxSizer(wx.HORIZONTAL)

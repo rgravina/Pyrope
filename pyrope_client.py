@@ -5,4 +5,3 @@ from pyrope.client.client import PyropeClient
     
 if __name__ == "__main__":
     client = PyropeClient()
-    client.startup()
