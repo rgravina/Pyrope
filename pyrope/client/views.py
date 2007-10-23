@@ -3,9 +3,9 @@ from eskimoapps.ui.mvp import View
 from eskimoapps.utils.crossplatform import platformSpecificPath
 from pyrope.config import *
 
-class LogonView(wx.Frame, View):
+class LogonView(wx.Dialog, View):
     def __init__(self, parent):
-        wx.Frame.__init__(self, parent, title="Welcome to Pyrope!", size=(250, 280), style=wx.DEFAULT_FRAME_STYLE ^ (wx.RESIZE_BORDER|wx.MAXIMIZE_BOX))
+        wx.Dialog.__init__(self, parent, title="Welcome to Pyrope!", size=(250, 280), style=wx.DEFAULT_DIALOG_STYLE | wx.MINIMIZE_BOX)
         self.SetBackgroundColour(wx.Colour(255,255,255))
 
         labelSize = size=(70, -1)
@@ -22,9 +22,11 @@ class LogonView(wx.Frame, View):
         boxServerPort.Add(self.txtServerPort, 1, wx.ALIGN_LEFT|wx.ALL, 5)
         
         boxButtons = wx.BoxSizer(wx.HORIZONTAL)
-        self.btnLogon = wx.Button(self, wx.ID_OK, "Connect")
-        self.btnLogon.SetDefault()
-        boxButtons.Add(self.btnLogon, 0, wx.ALIGN_CENTRE|wx.ALL, 5)
+        self.btnCancel = wx.Button(self, wx.ID_CANCEL, "Close")
+        self.btnConnect = wx.Button(self, wx.ID_OK, "Connect")
+        self.btnConnect.SetDefault()
+        boxButtons.Add(self.btnCancel, 0, wx.ALIGN_CENTRE|wx.ALL, 5)
+        boxButtons.Add(self.btnConnect, 0, wx.ALIGN_CENTRE|wx.ALL, 5)
 
         sizerMain = wx.BoxSizer(wx.VERTICAL)
         topImage = wx.Image(platformSpecificPath("images/pyrope.png"), wx.BITMAP_TYPE_PNG).ConvertToBitmap()
@@ -43,3 +45,16 @@ class LogonView(wx.Frame, View):
         lblCopyright.SetFont(font)
         sizerMain.Add(lblCopyright, 0, wx.ALIGN_CENTRE)
         self.SetSizer(sizerMain)
+        self.CentreOnScreen()
+
+    def _setServerName(self, name):
+        self.txtServerName.SetValue(unicode(name))
+    def _getServerName(self):
+        return self.txtServerName.GetValue()
+    serverName = property(_getServerName, _setServerName)
+
+    def _setServerPort(self, name):
+        self.txtServerPort.SetValue(unicode(name))
+    def _getServerPort(self):
+        return int(self.txtServerPort.GetValue())
+    serverPort = property(_getServerPort, _setServerPort)

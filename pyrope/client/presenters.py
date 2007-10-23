@@ -1,23 +1,15 @@
-from eskimoapps.ui.mvp import Presenter
 from eskimoapps.ui.application import *
-from eskimoapps.utils.singleton import Singleton
-from pyrope.config import redirectStdout
 from views import *
+from interactors import *
 
 class PyropeApplicationPresenter(ApplicationPresenter):
     def initView(self):
-        viewLogon = LogonView(None)
-        presenterLogon = LogonPresenter(viewLogon, Interactor());
-        viewLogon.start()
+        presenterLogon = LogonPresenter(LogonView(None), LogonInteractor());
 
 class LogonPresenter(Presenter, WindowPresenterMixin):
-    """
-    Presenter for the Logon screen. 
-    """
     def __init__(self, view, interactor):
         Presenter.__init__(self, None, view, interactor)
-        WindowPresenterMixin.__init__(self, PyropeApplicationPresenter.getInstance())
-        self.progress = None
+        WindowPresenterMixin.__init__(self)
         self.start()
 
     def onLoadViewFromModel(self):
@@ -31,7 +23,8 @@ class LogonPresenter(Presenter, WindowPresenterMixin):
         appmodel.port = self.view.serverPort
         self.connect()      
 
-    def enableLogonAndCancel(self, enabled):
-        self.view.btnLogon.Enable(enabled)
-        self.view.btnCancel.Enable(enabled)
+    def enableConnect(self, enabled):
+        self.view.btnConnect.Enable(enabled)
 
+    def connect(self):
+        pass

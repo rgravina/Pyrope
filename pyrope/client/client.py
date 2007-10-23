@@ -4,12 +4,12 @@
 # http://wiki.wxpython.org/index.cgi/ModelViewPresenter
 
 from pyrope.client.presenters import PyropeApplicationPresenter
-from twisted.internet import reactor
 from pyrope.config import *
+from twisted.internet import reactor
 
 class PyropeClient(object):
     def __init__(self,  host=HOST, port=PORT):
-        app = PyropeApplicationPresenter.getInstance("Pyrope", host, port)
+        app = PyropeApplicationPresenter.getInstance("Pyrope", reactor, host, port)
         reactor.registerWxApp(app.view)
         app.start()
         reactor.run(True)
