@@ -9,7 +9,7 @@ from twisted.internet import reactor
 
 class PyropeClient(object):
     def __init__(self,  host=HOST, port=PORT):
-        app = PyropeApplicationPresenter.getInstance("Pyrope", reactor, host, port)
+        app = PyropeApplicationPresenter.getInstance("Pyrope", reactor, host, port, redirectStdout)
         reactor.registerWxApp(app.view)
         app.start()
         reactor.run(True)
