@@ -3,6 +3,20 @@ from views import *
 from interactors import *
 
 class PyropeApplicationPresenter(ApplicationPresenter):
+    def __init__(self, appName, reactor, host, port, username="", password=""):
+        Presenter.__init__(self, ApplicationModel.getInstance(host, port, username, password)
+                           , PipelineApplicationView(appName, redirect=False)
+                           , Interactor())
+        WindowPresenterMixin.app = self
+        #list of open windows (the Presenters of the windows, anyway) in the application
+        self.openWindows = []
+        #Twisteds reactor
+        self._reactor = reactor        
+        #is there an error?
+        self.error = False
+        #progress bar
+        self.progress = None
+        
     def initView(self):
         presenterLogon = LogonPresenter(LogonView(None), LogonInteractor());
 
