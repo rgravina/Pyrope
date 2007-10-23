@@ -5,7 +5,7 @@ from interactors import *
 class PyropeApplicationPresenter(ApplicationPresenter):
     def __init__(self, appName, reactor, host, port, username="", password=""):
         Presenter.__init__(self, ApplicationModel.getInstance(host, port, username, password)
-                           , PipelineApplicationView(appName, redirect=False)
+                           , ApplicationView(appName, redirect=False)
                            , Interactor())
         WindowPresenterMixin.app = self
         #list of open windows (the Presenters of the windows, anyway) in the application
