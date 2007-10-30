@@ -1,6 +1,10 @@
 from eskimoapps.ui.application import *
+from eskimoapps.ui.databoundui import *
+from twisted.spread import pb
+from twisted.internet import reactor
 from views import *
 from interactors import *
+from pyrope.model import *
 
 class PyropeApplicationPresenter(ApplicationPresenter):
     def __init__(self, appName, reactor, host, port, redirect, username="", password=""):
@@ -18,8 +22,23 @@ class PyropeApplicationPresenter(ApplicationPresenter):
         self.progress = None
         
     def initView(self):
-        presenterLogon = LogonPresenter(LogonView(None), LogonInteractor());
+        self.presenterLogon = LogonPresenter(LogonView(None), LogonInteractor());
 
+    def connect(self):
+        factory = pb.PBClientFactory()
+        reactor.connectTCP(self.model.host, self.model.port, factory)
+        factory.getRootObject().addCallback(self.onConnect)
+
+    def onConnect(self, perspective):
+        def _gotApplications(applications):
+            model = ListofObjectsModel(applications, ["name"])
+            view = SimpleOpenView(model, "Start Application", "Applications")
+            presenter = SimpleOpenPresenter(model, view, SimpleOpenInteractor())
+            self.presenterLogon.onClose()
+        ApplicationPresenter.onConnect(self, perspective)
+        #now we have the persective, we can ask the server what applications are available
+        self.callRemote("getApplications").addCallback(_gotApplications)
+        
 class LogonPresenter(Presenter, WindowPresenterMixin):
     def __init__(self, view, interactor):
         Presenter.__init__(self, None, view, interactor)
@@ -41,4 +60,4 @@ class LogonPresenter(Presenter, WindowPresenterMixin):
         self.view.btnConnect.Enable(enabled)
 
     def connect(self):
-        pass
+        PyropeApplicationPresenter.getInstance().connect()
