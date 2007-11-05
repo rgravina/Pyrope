@@ -33,7 +33,7 @@ class PyropeApplicationPresenter(ApplicationPresenter):
         def _gotApplications(applications):
             model = ListofObjectsModel(applications, ["name"])
             view = SimpleOpenView(model, "Start Application", "Applications")
-            presenter = SimpleOpenPresenter(model, view, SimpleOpenInteractor())
+            presenter = OpenApplicationPresenter(model, view, SimpleOpenInteractor())
             self.presenterLogon.onClose()
         ApplicationPresenter.onConnect(self, perspective)
         #now we have the persective, we can ask the server what applications are available
@@ -61,3 +61,9 @@ class LogonPresenter(Presenter, WindowPresenterMixin):
 
     def connect(self):
         PyropeApplicationPresenter.getInstance().connect()
+
+class OpenApplicationPresenter(SimpleOpenPresenter):        
+    def onOpen(self):
+        #OK now we need to tell the server to start the application and wait for something to happen
+        application = self.model.getObjectAt(self.view.lstObjects.getSelectedIndex())
+        application.server.callRemote("startApplication")

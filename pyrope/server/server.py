@@ -7,12 +7,16 @@ from twisted.python import log
 from zope.interface import Interface, Attribute, implements
 #Pyrope imports
 from pyrope.errors import *
-    
+from pyrope.model import *
+
 class PyropeServer(pb.Root):
     def __init__(self):
         self._applications = []
     def remote_getApplications(self):
-        return self._applications
+        apps = []
+        for a in self._applications:
+            apps.append(RemoteApplication(a))
+        return apps
     def registerApplication(self, app):
         if app in self._applications:
             raise ApplicationAlreadyRegisteredException, "Applcation %s already registered" % app
