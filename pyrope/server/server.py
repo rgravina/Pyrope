@@ -21,15 +21,18 @@ class PyropeRealm:
 class AnonymousUserPerspective(pb.Avatar):
     def attached(self, mind):
         self.remote = mind
+        log.msg("Anonymous user logged on")
     def detached(self, mind):
         self.remote = None
-        log.msg("User logged out")
+        log.msg("Anonymous user logged out")
     def perspective_getApplications(self):
         return self.server.getApplications()
     def createFrame(self, frame):
         self.remote.callRemote("createFrame", frame)
     def show(self, id):
         self.remote.callRemote("show", id)
+    def createLabel(self, label):
+        self.remote.callRemote("createLabel", label)
 
 class PyropeServer(pb.Root):
     def __init__(self):

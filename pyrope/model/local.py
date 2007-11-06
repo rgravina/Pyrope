@@ -46,8 +46,5 @@ class Label(Window):
     def __init__(self, perspective, parent, text=u""):
         Window.__init__(self, perspective, parent)
         self.text = text
-        #tell the client to create a wxFrame
-        perspective.createFrame(self)
-    def show(self):
-        self.perspective.show(self.id)
+        perspective.createLabel(self)
 pb.setUnjellyableForClass(Label, Label)
