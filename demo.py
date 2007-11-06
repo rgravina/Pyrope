@@ -18,8 +18,6 @@ class SimpleWidgetApplicatioHandler(object):
         log.msg("Started handler SimpleWidgetApplicatioHandler")
         frame = Frame(perspective, None, title=u"Simple Widget Demo")
         frame.show()
-        frame2 = Frame(perspective, frame, title=u"Simple Widget Demo2")
-        frame2.show()
 
 class AddressBookApplicatioHandler(object):
     implements(IApplicationHandler)
