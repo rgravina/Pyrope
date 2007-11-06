@@ -7,7 +7,7 @@ from interactors import *
 from pyrope.model import *
 
 class PyropeApplicationPresenter(ApplicationPresenter):
-    def __init__(self, appName, reactor, host, port, redirect, username="", password=""):
+    def __init__(self, appName, reactor, host, port, redirect, username="anonymous", password="anonymous"):
         Presenter.__init__(self, ApplicationModel.getInstance(host, port, username, password)
                            , ApplicationView(appName, redirect=redirect)
                            , Interactor())
@@ -20,6 +20,7 @@ class PyropeApplicationPresenter(ApplicationPresenter):
         self.error = False
         #progress bar
         self.progress = None
+        self.localHandler = LocalHandler()
         
     def initView(self):
         self.presenterLogon = LogonPresenter(LogonView(None), LogonInteractor());
@@ -27,7 +28,7 @@ class PyropeApplicationPresenter(ApplicationPresenter):
     def connect(self):
         factory = pb.PBClientFactory()
         reactor.connectTCP(self.model.host, self.model.port, factory)
-        factory.getRootObject().addCallback(self.onConnect)
+        factory.login(self.model.credentials, client=self.localHandler).addCallback(self.onConnect)
 
     def onConnect(self, perspective):
         def _gotApplications(applications):

@@ -3,6 +3,7 @@ from twisted.spread import pb
 from twisted.python import log
 #eskimoapps imports
 #from eskimoapps.utils.pbutil import ObservedCacheable
+import random
 
 class Application(pb.Viewable):
     def __init__(self, name, handler=None, description=None):
@@ -12,7 +13,6 @@ class Application(pb.Viewable):
         if not self.handler:
             self.handler = ApplicationHandler()
     def view_startApplication(self, perspective):
-        print perspective
         self.handler.start(perspective)
 
 class IApplicationHandler(Interface):
@@ -25,14 +25,29 @@ class ApplicationHandler(object):
     def start(self):
         log.msg("Starting up default application handler.")
 
-class Window(object):
-    def __init__(self, perspective, window):
+class Window(pb.Copyable, pb.RemoteCopy):
+    def __init__(self, perspective, parent):
+        self.id = random.random()
         self.perspective = perspective    
-        self.window = window    
+        self.parent = parent    
+pb.setUnjellyableForClass(Window, Window)
 
 class Frame(Window):
-    def __init__(self, perspective, window, title=u""):
-        Window.__init__(self, perspective, window)
+    def __init__(self, perspective, parent, title=u""):
+        Window.__init__(self, perspective, parent)
         self.title = title
-        print perspective
+        #tell the client to create a wxFrame
+        perspective.createFrame(self)
+    def show(self):
+        self.perspective.show(self.id)
+pb.setUnjellyableForClass(Frame, Frame)
 
+class Label(Window):
+    def __init__(self, perspective, parent, text=u""):
+        Window.__init__(self, perspective, parent)
+        self.text = text
+        #tell the client to create a wxFrame
+        perspective.createFrame(self)
+    def show(self):
+        self.perspective.show(self.id)
+pb.setUnjellyableForClass(Label, Label)
