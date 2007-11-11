@@ -14,13 +14,15 @@ class PyropeApplicationPresenter(ApplicationPresenter):
         WindowPresenterMixin.app = self
         #list of open windows (the Presenters of the windows, anyway) in the application
         self.openWindows = []
+        #list of all running applications
+        self.runningApplications = []
         #Twisteds reactor
         self._reactor = reactor        
         #is there an error?
         self.error = False
         #progress bar
         self.progress = None
-        self.localHandler = LocalHandler()
+        self.localHandler = PyropeClientHandler()
         
     def initView(self):
         self.presenterLogon = LogonPresenter(LogonView(None), LogonInteractor());
@@ -33,7 +35,7 @@ class PyropeApplicationPresenter(ApplicationPresenter):
     def onConnect(self, perspective):
         def _gotApplications(applications):
             model = ListofObjectsModel(applications, ["name"])
-            view = SimpleOpenView(model, "Start Application", "Applications")
+            view = SimpleOpenView(model, "Applications on "+self.model.host, "Applications", openButtonText="Run")
             presenter = OpenApplicationPresenter(model, view, SimpleOpenInteractor())
             self.presenterLogon.onClose()
         ApplicationPresenter.onConnect(self, perspective)
@@ -65,6 +67,11 @@ class LogonPresenter(Presenter, WindowPresenterMixin):
 
 class OpenApplicationPresenter(SimpleOpenPresenter):        
     def onOpen(self):
+        #TODO: uncomment this when figured out how to know when last window of application is closed (not Pyrope, the running app)
+        def _openedApplication(result, application):
+            #application started. add to list of running applications
+            PyropeApplicationPresenter.getInstance().runningApplications.append(application)
         #OK now we need to tell the server to start the application and wait for something to happen
         application = self.model.getObjectAt(self.view.lstObjects.getSelectedIndex())
-        application.server.callRemote("startApplication")
+        application.handler = RemoteApplicationHandler(application, PyropeApplicationPresenter.getInstance())
+        application.server.callRemote("startApplication", application.handler).addCallback(_openedApplication, application)

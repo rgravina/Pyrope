@@ -31,11 +31,11 @@ computers but allows your easy access to it, as it if was connected by a
 I was looking for a way to simplfiy the way applications are built and 
 deployed over networks. Why are web applications so popular despite the UI 
 straightjacket they present users, designers and developers? I think the answer
-is simple - users like the fact that can access their applications from a  
-web browser and developers like the fact that they don't have to develop the 
-client software. Pyrope is an attempt to bring this to the world of desktop 
-applications.
+is simple - users like the fact that can access all their web applications from
+a single application and developers like the fact that they don't have to 
+develop the client software. Pyrope is an attempt to bring this to the world of
+desktop GUI applications.
 
 * Acknowlegements *
 Pyrope would not have been possible wihout wxWidgets and wxPython, Twisted 
-Python, the Python langague itself.
+Python, the Python language itself.

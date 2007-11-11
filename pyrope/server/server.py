@@ -19,6 +19,9 @@ class PyropeRealm:
         return pb.IPerspective, avatar, lambda a=avatar:a.detached(mind)
 
 class AnonymousUserPerspective(pb.Avatar):
+    """Pyrope accepts anonymous connnections from Pyrope clients. We want this so users connecting to the server can get a list of applications and also
+    so authentication can be dealt with on a per-application basis."""
+    #TODO: authentication on a per-application basis
     def attached(self, mind):
         self.remote = mind
         log.msg("Anonymous user logged on")
@@ -27,14 +30,27 @@ class AnonymousUserPerspective(pb.Avatar):
         log.msg("Anonymous user logged out")
     def perspective_getApplications(self):
         return self.server.getApplications()
+
+    #TODO: move these methods somewhere more appropriate, like the Pyrope GUI classes
     def createFrame(self, frame):
         self.remote.callRemote("createFrame", frame)
     def show(self, id):
         self.remote.callRemote("show", id)
+    def createPanel(self, panel):
+        self.remote.callRemote("createPanel", panel)
+    def createButton(self, button):
+        self.remote.callRemote("createButton", button)
     def createLabel(self, label):
         self.remote.callRemote("createLabel", label)
+    def createNotebook(self, notebook):
+        self.remote.callRemote("createNotebook", notebook)
+    def addPage(self, notebookID, panelID, title):
+        self.remote.callRemote("addPage", notebookID, panelID, title)
+    def createBoxSizer(self, sizer):
+        self.remote.callRemote("createBoxSizer", sizer)
 
 class PyropeServer(pb.Root):
+    """Register applications and get a list of them."""
     def __init__(self):
         self._applications = []
     def getApplications(self):
