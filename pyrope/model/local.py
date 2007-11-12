@@ -77,7 +77,7 @@ class Frame(Window):
     def __init__(self, app, handler, parent, title=u""):
         Window.__init__(self, app, handler, parent)
         self.title = title
-    def setup(self):
+    def createRemote(self):
         return self.handler.callRemote("createFrame", self)
     def show(self):
         return self.remote.callRemote("show")
