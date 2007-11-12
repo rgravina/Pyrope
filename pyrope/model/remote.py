@@ -1,7 +1,7 @@
 from twisted.spread import pb
 from twisted.python import log
 from twisted.internet.defer import inlineCallbacks
-from twisted.spread.flavors import NoSuchMethod
+#from twisted.spread.flavors import NoSuchMethod
 import wx
 
 class RemoteApplication(pb.Copyable, pb.RemoteCopy):
@@ -28,7 +28,9 @@ class PyropeLocalReference(pb.Referenceable):
             self.app.shutdown()
         self.widget.Destroy()
     def remote_show(self):
-        self.widget.Show()
+        return self.widget.Show()
+    def remote_centre(self, direction, centreOnScreen):
+        return self.widget.Centre()
 
 class RemoteApplicationHandler(pb.Referenceable):
     def __init__(self, app, appPresenter):
@@ -38,7 +40,7 @@ class RemoteApplicationHandler(pb.Referenceable):
         self.topLevelWindows = []
     def remote_createFrame(self, remoteFrame):
         #create wxFrame
-        frame = wx.Frame(None, wx.ID_ANY, remoteFrame.title)
+        frame = wx.Frame(None, wx.ID_ANY, remoteFrame.title, size=remoteFrame.size, pos=remoteFrame.position)
         localRef = PyropeLocalReference(self, frame)
         frame.Bind(wx.EVT_CLOSE, localRef.onClose)
         self.topLevelWindows.append(frame)

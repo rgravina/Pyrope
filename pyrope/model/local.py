@@ -2,6 +2,7 @@ from zope.interface import implements, Interface, Attribute
 from twisted.spread import pb
 from twisted.python import log
 from twisted.internet.defer import inlineCallbacks
+from pyrope.model.shared import *
 
 #eskimoapps imports
 #from eskimoapps.utils.pbutil import ObservedCacheable
@@ -38,23 +39,26 @@ class Application(pb.Viewable):
         """Subclasses should put any shitdown code here"""
         pass
     def view_createdFrame(self, perspective, remote, id):
-        print "created frame"
         widget = self.widgets[id]
         widget.remote = remote
 
 class Window(pb.Copyable, pb.RemoteCopy):
-    def __init__(self, app, handler, parent):
+    def __init__(self, app, handler, parent, position=DefaultPosition, size=DefaultSize):
         self.id = random.random()
         #TODO: figure out a way to not have to always pass the perspective as the first argument
         self.app = app
         app.widgets[self.id] = self
         self.handler = handler
         self.parent = parent
+        self.position = position
+        self.size = size
+        #the remote reference will be set when the client supplies it
         self.remote = None
     def getStateToCopy(self):
         d = self.__dict__.copy()
         if self.parent:
             d["parent"] = self.parent.id
+        #we don't need to send these objects to the client (and can't anyway)
         del d["handler"]
         del d["remote"]
         return d
@@ -74,14 +78,15 @@ pb.setUnjellyableForClass(Window, Window)
 #pb.setUnjellyableForClass(Panel, Panel)
 #
 class Frame(Window):
-    def __init__(self, app, handler, parent, title=u""):
-        Window.__init__(self, app, handler, parent)
+    def __init__(self, app, handler, parent, title=u"", position=DefaultPosition, size=DefaultSize):
+        Window.__init__(self, app, handler, parent, position=position, size=size)
         self.title = title
     def createRemote(self):
         return self.handler.callRemote("createFrame", self)
     def show(self):
         return self.remote.callRemote("show")
-
+    def centre(self, direction=Both, centreOnScreen=False):
+        return self.remote.callRemote("centre", direction, centreOnScreen)
 pb.setUnjellyableForClass(Frame, Frame)
 
 #class Button(Window):

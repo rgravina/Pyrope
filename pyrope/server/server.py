@@ -32,22 +32,22 @@ class AnonymousUserPerspective(pb.Avatar):
         return self.server.getApplications()
 
     #TODO: move these methods somewhere more appropriate, like the Pyrope GUI classes
-    def createFrame(self, frame):
-        self.remote.callRemote("createFrame", frame)
-    def show(self, id):
-        self.remote.callRemote("show", id)
-    def createPanel(self, panel):
-        self.remote.callRemote("createPanel", panel)
-    def createButton(self, button):
-        self.remote.callRemote("createButton", button)
-    def createLabel(self, label):
-        self.remote.callRemote("createLabel", label)
-    def createNotebook(self, notebook):
-        self.remote.callRemote("createNotebook", notebook)
-    def addPage(self, notebookID, panelID, title):
-        self.remote.callRemote("addPage", notebookID, panelID, title)
-    def createBoxSizer(self, sizer):
-        self.remote.callRemote("createBoxSizer", sizer)
+#    def createFrame(self, frame):
+#        self.remote.callRemote("createFrame", frame)
+#    def show(self, id):
+#        self.remote.callRemote("show", id)
+#    def createPanel(self, panel):
+#        self.remote.callRemote("createPanel", panel)
+#    def createButton(self, button):
+#        self.remote.callRemote("createButton", button)
+#    def createLabel(self, label):
+#        self.remote.callRemote("createLabel", label)
+#    def createNotebook(self, notebook):
+#        self.remote.callRemote("createNotebook", notebook)
+#    def addPage(self, notebookID, panelID, title):
+#        self.remote.callRemote("addPage", notebookID, panelID, title)
+#    def createBoxSizer(self, sizer):
+#        self.remote.callRemote("createBoxSizer", sizer)
 
 class PyropeServer(pb.Root):
     """Register applications and get a list of them."""
