@@ -4,6 +4,7 @@ from twisted.spread import pb
 from twisted.python import log
 from twisted.internet.defer import inlineCallbacks
 from pyrope.model.shared import *
+from pyrope.errors import RemoteResourceNotCreatedException
 
 #eskimoapps imports
 #from eskimoapps.utils.pbutil import ObservedCacheable
@@ -81,6 +82,11 @@ class Window(pb.Copyable, pb.RemoteCopy):
         del d["handler"]
         del d["remote"]
         return d
+    def callRemote(self, functName, *args):
+        if self.remote:
+            return self.remote.callRemote(functName, *args)
+        else:
+            raise RemoteResourceNotCreatedException
 pb.setUnjellyableForClass(Window, Window)
 
 #class BoxSizer(pb.Copyable, pb.RemoteCopy):
@@ -109,9 +115,9 @@ class Frame(Window):
     def createRemote(self):
         return self.handler.callRemote("createFrame", self)
     def show(self):
-        return self.remote.callRemote("show")
+        return self.callRemote("show")
     def centre(self, direction=wx.BOTH, centreOnScreen=False):
-        return self.remote.callRemote("centre", direction, centreOnScreen)
+        return self.callRemote("centre", direction, centreOnScreen)
 pb.setUnjellyableForClass(Frame, Frame)
 
 #class Button(Window):
