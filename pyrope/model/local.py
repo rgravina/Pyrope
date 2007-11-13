@@ -102,8 +102,9 @@ class Frame(Window):
         self.title = title
     def getStateToCopy(self):
         d = Window.getStateToCopy(self)
-        if not self._appliedStyles:
-            d["style"] = constants[DefaultFrameStyle]
+        #if no styles have been added or remove, apply the default style
+        if not self._appliedStyles and not self._removedStyles:
+            d["style"] =  d["style"] | constants[DefaultFrameStyle]
         return d
     def createRemote(self):
         return self.handler.callRemote("createFrame", self)
