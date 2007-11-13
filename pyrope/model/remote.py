@@ -2,7 +2,7 @@ from twisted.spread import pb
 from twisted.python import log
 from twisted.internet.defer import inlineCallbacks
 #from twisted.spread.flavors import NoSuchMethod
-import wx
+from pyrope.model.shared import *
 
 class RemoteApplication(pb.Copyable, pb.RemoteCopy):
     def __init__(self, app):
@@ -18,19 +18,24 @@ pb.setUnjellyableForClass(RemoteApplication, RemoteApplication)
 #        except NoSuchMethod:
 #            return getattr(self.widget, message)()
 
-class PyropeLocalReference(pb.Referenceable):
+class LocalWindowReference(pb.Referenceable):
     def __init__(self, app, widget):
         self.app = app
         self.widget = widget
+    def remote_show(self):
+        return self.widget.Show()
+
+class LocalFrameReference(LocalWindowReference):
     def onClose(self, event):
         self.app.topLevelWindows.remove(self.widget)
         if not self.app.topLevelWindows:
             self.app.shutdown()
         self.widget.Destroy()
-    def remote_show(self):
-        return self.widget.Show()
     def remote_centre(self, direction, centreOnScreen):
-        return self.widget.Centre()
+        dir = direction
+        if centreOnScreen:
+            dir | wx.CENTRE_ON_SCREEN
+        return self.widget.Centre(direction = dir)
 
 class RemoteApplicationHandler(pb.Referenceable):
     def __init__(self, app, appPresenter):
@@ -38,13 +43,18 @@ class RemoteApplicationHandler(pb.Referenceable):
         self.appPresenter = appPresenter
         #only for wx.Frame and wx.Dialogue
         self.topLevelWindows = []
+    def remote_createWindow(self, remoteWindow):
+        #create wxFrame
+        window = wx.Window(None, wx.ID_ANY, size=remoteWindow.size, pos=remoteWindow.position, style=remoteWindow.style)
+        localRef = LocalWindowReference(self, window)
+        return self.app.server.callRemote("createdWindow", localRef, remoteWindow.id)
     def remote_createFrame(self, remoteFrame):
         #create wxFrame
-        frame = wx.Frame(None, wx.ID_ANY, remoteFrame.title, size=remoteFrame.size, pos=remoteFrame.position)
-        localRef = PyropeLocalReference(self, frame)
+        frame = wx.Frame(None, wx.ID_ANY, remoteFrame.title, size=remoteFrame.size, pos=remoteFrame.position, style=remoteFrame.style)
+        localRef = LocalFrameReference(self, frame)
         frame.Bind(wx.EVT_CLOSE, localRef.onClose)
         self.topLevelWindows.append(frame)
-        return self.app.server.callRemote("createdFrame", localRef, remoteFrame.id)
+        return self.app.server.callRemote("createdWindow", localRef, remoteFrame.id)
     def shutdown(self):
         def _shutdown(result):
             self.appPresenter.runningApplications.remove(self.app)
