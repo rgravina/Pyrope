@@ -43,6 +43,9 @@ class Application(pb.Viewable):
     def view_createdWindow(self, perspective, remote, id):
         widget = self.widgets[id]
         widget.remote = remote
+    def view_event(self, perspective, id, event):
+        widget = self.widgets[id]
+        widget.handlers[event](widget)
 
 class Window(pb.Copyable, pb.RemoteCopy):
     def __init__(self, app, handler, parent, position=DefaultPosition, size=DefaultSize):
@@ -59,6 +62,8 @@ class Window(pb.Copyable, pb.RemoteCopy):
         self._removedStyles = []
         #the remote reference will be set when the client supplies it
         self.remote = None
+        #for event handling
+        self.handlers = {}
     def createRemote(self):
         return self.handler.callRemote("createWindow", self)
     def addStyle(self, style):
@@ -79,14 +84,21 @@ class Window(pb.Copyable, pb.RemoteCopy):
         for style in self._removedStyles:
             d["style"] = d["style"] ^ constants[style]
         #we don't need to send these objects to the client (and can't anyway)
-        del d["handler"]
+        d["handlers"] = []
+        for event, fn in self.handlers.items():
+            d["handlers"].append(event)
         del d["remote"]
         return d
     def callRemote(self, functName, *args):
         if self.remote:
             return self.remote.callRemote(functName, *args)
         else:
-            raise RemoteResourceNotCreatedException
+            raise RemoteResourceNotCreatedException, "You must call createRemote before calling this method"
+    def bind(self, event, handlerFunction):
+        self.handlers[event] = handlerFunction
+    def clientToScreen(self, point):
+        return self.callRemote("clientToScreen", point)
+
 pb.setUnjellyableForClass(Window, Window)
 
 #class BoxSizer(pb.Copyable, pb.RemoteCopy):
@@ -118,6 +130,8 @@ class Frame(Window):
         return self.callRemote("show")
     def centre(self, direction=wx.BOTH, centreOnScreen=False):
         return self.callRemote("centre", direction, centreOnScreen)
+    def destroy(self):
+        return self.callRemote("destroy")
 pb.setUnjellyableForClass(Frame, Frame)
 
 #class Button(Window):
