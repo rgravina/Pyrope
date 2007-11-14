@@ -1,7 +1,7 @@
 import wx
 from twisted.spread import pb
 from twisted.python import log
-from twisted.internet.defer import inlineCallbacks
+#from twisted.internet.defer import inlineCallbacks
 #from twisted.spread.flavors import NoSuchMethod
 from pyrope.model.shared import *
 
@@ -12,14 +12,14 @@ class RemoteApplication(pb.Copyable, pb.RemoteCopy):
         self.server = app
 pb.setUnjellyableForClass(RemoteApplication, RemoteApplication)
 
-#class PyropeReferenceable(pb.Referenceable):
-#    def remoteMessageReceived(self, broker, message, args, kw):
-#        try:
-#            return pb.Referenceable.remoteMessageReceived(self, broker, message, args, kw)
-#        except NoSuchMethod:
-#            return getattr(self.widget, message)()
+class PyropeReferenceable(pb.Referenceable):
+    def remoteMessageReceived(self, broker, message, args, kw):
+        try:
+            return pb.Referenceable.remoteMessageReceived(self, broker, message, args, kw)
+        except NoSuchMethod:
+            return getattr(self.widget, message)()
 
-class LocalWindowReference(pb.Referenceable):
+class LocalWindowReference(PyropeReferenceable):
     def __init__(self, app, widget, id, handlers):
         self.app = app
         self.widget = widget
@@ -27,9 +27,9 @@ class LocalWindowReference(pb.Referenceable):
         self.boundEvents = []
         for event in handlers:
             self.boundEvents.append(event)
-    def remote_show(self):
-        return self.widget.Show()
-    def remote_clientToScreen(self, point):
+#    def remote_show(self):
+#        return self.widget.Show()
+    def remote_ClientToScreen(self, point):
         point = self.widget.ClientToScreen(point)
         #can't return a wxPoint directly over the network, so return a tuple instead
         #TODO: generalise this
@@ -44,13 +44,12 @@ class LocalWindowReference(pb.Referenceable):
             self.app.app.server.callRemote("event", self.id, EventClose)
         else:
             self._destroy()
-    def remote_centre(self, direction, centreOnScreen):
+    def remote_Centre(self, direction, centreOnScreen):
         dir = direction
         if centreOnScreen:
             dir | wx.CENTRE_ON_SCREEN
         return self.widget.Centre(direction = dir)
-
-    def remote_destroy(self):
+    def remote_Destroy(self):
         self._destroy()
 
 class LocalFrameReference(LocalWindowReference):

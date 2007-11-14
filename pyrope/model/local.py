@@ -98,14 +98,14 @@ class Window(pb.Copyable, pb.RemoteCopy):
             raise RemoteResourceNotCreatedException, "You must call createRemote before calling this method"
     def bind(self, event, handlerFunction):
         self.eventHandlers[event] = handlerFunction
-    def clientToScreen(self, point):
-        return self.callRemote("clientToScreen", point)
-    def show(self):
-        return self.callRemote("show")
-    def centre(self, direction=wx.BOTH, centreOnScreen=False):
+    def ClientToScreen(self, point):
+        return self.callRemote("ClientToScreen", point)
+    def Show(self):
+        return self.callRemote("Show")
+    def Centre(self, direction=wx.BOTH, centreOnScreen=False):
         return self.callRemote("centre", direction, centreOnScreen)
-    def destroy(self):
-        return self.callRemote("destroy")
+    def Destroy(self):
+        return self.callRemote("Destroy")
 
 pb.setUnjellyableForClass(Window, Window)
 
@@ -134,12 +134,12 @@ class Frame(Window):
 #        return d
     def createRemote(self):
         return self.handler.callRemote("createFrame", self)
-    def show(self):
-        return self.callRemote("show")
-    def centre(self, direction=wx.BOTH, centreOnScreen=False):
-        return self.callRemote("centre", direction, centreOnScreen)
-    def destroy(self):
-        return self.callRemote("destroy")
+#    def show(self):
+#        return self.callRemote("show")
+#    def Centre(self, direction=wx.BOTH, centreOnScreen=False):
+#        return self.callRemote("centre", direction, centreOnScreen)
+#    def destroy(self):
+#        return self.callRemote("destroy")
 pb.setUnjellyableForClass(Frame, Frame)
 
 class Dialog(Window):
@@ -154,8 +154,8 @@ class Dialog(Window):
 #        return d
     def createRemote(self):
         return self.handler.callRemote("createDialog", self)
-    def showModal(self):
-        return self.callRemote("showModal")
+    def ShowModal(self):
+        return self.callRemote("ShowModal")
 pb.setUnjellyableForClass(Dialog, Dialog)
 
 #class MessageDialog(Dialog):
