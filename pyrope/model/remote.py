@@ -2,7 +2,7 @@ import wx
 from twisted.spread import pb
 from twisted.python import log
 #from twisted.internet.defer import inlineCallbacks
-#from twisted.spread.flavors import NoSuchMethod
+from twisted.spread.flavors import NoSuchMethod
 from pyrope.model.shared import *
 
 class RemoteApplication(pb.Copyable, pb.RemoteCopy):
@@ -19,7 +19,13 @@ class PyropeReferenceable(pb.Referenceable):
         except NoSuchMethod:
             return getattr(self.widget, message)()
 
-class LocalWindowReference(PyropeReferenceable):
+class LocalReference(PyropeReferenceable):
+    def __init__(self, app, remote):
+        self.app = app
+        self.remote = remote
+        self.widget = createWidget()
+
+class LocalWindowReference(LocalReference):
     def __init__(self, app, widget, id, handlers):
         self.app = app
         self.widget = widget
@@ -27,30 +33,28 @@ class LocalWindowReference(PyropeReferenceable):
         self.boundEvents = []
         for event in handlers:
             self.boundEvents.append(event)
-#    def remote_show(self):
-#        return self.widget.Show()
     def remote_ClientToScreen(self, point):
         point = self.widget.ClientToScreen(point)
         #can't return a wxPoint directly over the network, so return a tuple instead
         #TODO: generalise this
         return (point.x, point.y)
+    def remote_Destroy(self):
+        self._destroy()
     def _destroy(self):
         self.app.topLevelWindows.remove(self.widget)
         if not self.app.topLevelWindows:
             self.app.shutdown()
         self.widget.Destroy()
     def onClose(self, event):
-        if wx.EVT_CLOSE in self.boundEvents:
-            self.app.app.server.callRemote("event", self.id, EventClose)
+        if EventClose in self.boundEvents:
+            self.app.app.server.callRemote("handleEvent", self.id, EventClose)
         else:
             self._destroy()
-    def remote_Centre(self, direction, centreOnScreen):
+    def remote_Centre(self, direction, centreOnScreen): 
         dir = direction
         if centreOnScreen:
             dir | wx.CENTRE_ON_SCREEN
         return self.widget.Centre(direction = dir)
-    def remote_Destroy(self):
-        self._destroy()
 
 class LocalFrameReference(LocalWindowReference):
     pass
@@ -59,42 +63,57 @@ class LocalDialogReference(LocalWindowReference):
     def remote_showModal(self):
         return self.widget.ShowModal()
 
+class WidgetFactory(object):
+    @classmethod
+    def create(cls, app, remote):
+        if remote.parent:
+            parent = app.widgets[remote.parent]
+        else: 
+            parent = None
+        widget, localRef = getattr(WidgetFactory, "create"+remote.__class__.__name__)(app, parent, remote)
+        app.app.server.callRemote("updateWidgetRemoteReference", localRef, remote.id)
+        return widget, localRef
+    @classmethod
+    def createWindow(cls, app, parent, remote):
+        window = wx.Window(parent, wx.ID_ANY, size=remote.size, pos=remote.position, style=remote.style)
+        localRef = LocalWindowReference(app, window, remote.id, remote.eventHandlers)
+        return window, localRef
+    @classmethod
+    def createFrame(cls, app, parent, remote):
+        frame = wx.Frame(parent, wx.ID_ANY, remote.title, size=remote.size, pos=remote.position, style=remote.style)
+        localRef = LocalFrameReference(app, frame, remote.id, remote.eventHandlers)
+        frame.Bind(wx.EVT_CLOSE, localRef.onClose)
+        app.topLevelWindows.append(frame)
+        return frame, localRef
+    @classmethod
+    def createDialog(cls, app, parent, remote):
+        dialog = wx.Dialog(parent, wx.ID_ANY, remote.title, size=remote.size, pos=remote.position, style=remote.style)
+        localRef = LocalDialogReference(app, dialog, remote.id, remote.eventHandlers)
+        dialog.Bind(wx.EVT_CLOSE, localRef.onClose)
+        self.topLevelWindows.append(dialog)
+        return dialog, localRef
+    @classmethod
+    def createMessageDialog(cls, app, parent, remote):
+        dialog = wx.MessageDialog(parent, remote.message, caption=remote.title, pos=remote.position, style=remote.style)
+        localRef = LocalDialogReference(app, dialog, remote.id, remote.eventHandlers)
+        dialog.Bind(wx.EVT_CLOSE, localRef.onClose)
+        app.topLevelWindows.append(dialog)
+        return dialog, localRef
+    
 class RemoteApplicationHandler(pb.Referenceable):
     def __init__(self, app, appPresenter):
         self.app = app
         self.appPresenter = appPresenter
-        #only for wx.Frame and wx.Dialogue
+        #only for wx.Frame and wx.Dialog
         self.topLevelWindows = []
-    def remote_createWindow(self, remoteWindow):
-        #create wxFrame
-        window = wx.Window(None, wx.ID_ANY, size=remoteWindow.size, pos=remoteWindow.position, style=remoteWindow.style)
-        localRef = LocalWindowReference(self, window, remoteWindow.id, remoteWindow.eventHandlers)
-        return self.app.server.callRemote("createdWindow", localRef, remoteWindow.id)
-    def remote_createFrame(self, remoteFrame):
-        #create wxFrame
-        frame = wx.Frame(None, wx.ID_ANY, remoteFrame.title, size=remoteFrame.size, pos=remoteFrame.position, style=remoteFrame.style)
-        localRef = LocalFrameReference(self, frame, remoteFrame.id, remoteFrame.eventHandlers)
-        self.app.server.callRemote("createdWindow", localRef, remoteFrame.id)
-        frame.Bind(wx.EVT_CLOSE, localRef.onClose)
-        self.topLevelWindows.append(frame)
-    def remote_createDialog(self, remoteDialog):
-        #create wxDialog
-        dialog = wx.Dialog(None, wx.ID_ANY, remoteDialog.title, size=remoteDialog.size, pos=remoteDialog.position, style=remoteDialog.style)
-        localRef = LocalDialogReference(self, dialog, remoteDialog.id, remoteDialog.eventHandlers)
-        self.app.server.callRemote("createdWindow", localRef, remoteDialog.id)
-        dialog.Bind(wx.EVT_CLOSE, localRef.onClose)
-        self.topLevelWindows.append(dialog)
-    def remote_createMessageDialog(self, remoteDialog):
-        #create wxDialog
-        dialog = wx.MessageDialog(None, wx.ID_ANY, remoteDialog.title, size=remoteDialog.size, pos=remoteDialog.position, style=remoteDialog.style)
-        localRef = LocalDialogReference(self, dialog, remoteDialog.id, remoteDialog.eventHandlers)
-        self.app.server.callRemote("createdWindow", localRef, remoteDialog.id)
-        dialog.Bind(wx.EVT_CLOSE, localRef.onClose)
-        self.topLevelWindows.append(dialog)
+        self.widgets = {}
     def shutdown(self):
         def _shutdown(result):
             self.appPresenter.runningApplications.remove(self.app)
         return self.app.server.callRemote("shutdownApplication", self).addCallback(_shutdown)
+    def remote_createWidget(self, remoteWidget):
+        widget, localRef = WidgetFactory.create(self, remoteWidget)
+        self.widgets[remoteWidget.id] = widget
 
 class PyropeClientHandler(pb.Referenceable):
     pass

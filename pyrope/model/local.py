@@ -40,10 +40,10 @@ class Application(pb.Viewable):
     def shutdown(self, handler):
         """Subclasses should put any shitdown code here"""
         pass
-    def view_createdWindow(self, perspective, remote, id):
+    def view_updateWidgetRemoteReference(self, perspective, remote, id):
         widget = self.widgets[id]
         widget.remote = remote
-    def view_event(self, perspective, id, event):
+    def view_handleEvent(self, perspective, id, event):
         widget = self.widgets[id]
         widget.eventHandlers[event](widget)
 
@@ -59,32 +59,16 @@ class Window(pb.Copyable, pb.RemoteCopy):
         self.position = position
         self.size = size
         self.style = style
-#        self._appliedStyles = []
-#        self._removedStyles = []
         #the remote reference will be set when the client supplies it
         self.remote = None
         #for event handling
         self.eventHandlers = {}
     def createRemote(self):
-        return self.handler.callRemote("createWindow", self)
-#    def addStyle(self, style):
-#        self._appliedStyles.append(style)
-#        if style in self._removedStyles:
-#            self._removedStyles.remove(style)
-#    def removeStyle(self, style):
-#        self._removedStyles.append(style)
-#        if style in self._appliedStyles:
-#            self._appliedStyles.remove(style)
+        return self.handler.callRemote("createWidget", self)
     def getStateToCopy(self):
         d = self.__dict__.copy()
         if self.parent:
             d["parent"] = self.parent.id
-#        d["style"] = 0
-#        for style in self._appliedStyles:
-#            d["style"] = d["style"] | constants[style]
-#        for style in self._removedStyles:
-#            d["style"] = d["style"] ^ constants[style]
-        #we don't need to send these objects to the client (and can't anyway)
         del d["handler"]
         d["eventHandlers"] = []
         for event, fn in self.eventHandlers.items():
@@ -103,11 +87,31 @@ class Window(pb.Copyable, pb.RemoteCopy):
     def Show(self):
         return self.callRemote("Show")
     def Centre(self, direction=wx.BOTH, centreOnScreen=False):
-        return self.callRemote("centre", direction, centreOnScreen)
+        return self.callRemote("Centre", direction, centreOnScreen)
     def Destroy(self):
         return self.callRemote("Destroy")
 
 pb.setUnjellyableForClass(Window, Window)
+#
+class Frame(Window):
+    def __init__(self, app, handler, parent, title=u"", position=DefaultPosition, size=DefaultSize, style=wx.DEFAULT_FRAME_STYLE):
+        Window.__init__(self, app, handler, parent, position=position, size=size, style=style)
+        self.title = title
+pb.setUnjellyableForClass(Frame, Frame)
+
+class Dialog(Window):
+    def __init__(self, app, handler, parent, title=u"", position=DefaultPosition, size=DefaultSize, style=wx.DEFAULT_DIALOG_STYLE):
+        Window.__init__(self, app, handler, parent, position=position, size=size, style=style)
+        self.title = title
+    def ShowModal(self):
+        return self.callRemote("ShowModal")
+pb.setUnjellyableForClass(Dialog, Dialog)
+
+class MessageDialog(Dialog):
+    def __init__(self, app, handler, parent, message, caption=u"Message Box", position=DefaultPosition, size=DefaultSize, style=wx.OK | wx.CANCEL):
+        Dialog.__init__(self, app, handler, parent, title=caption, position=position, size=size, style=style)
+        self.message = message
+pb.setUnjellyableForClass(MessageDialog, MessageDialog)
 
 #class BoxSizer(pb.Copyable, pb.RemoteCopy):
 #    def __init__(self, perspective):
@@ -121,56 +125,6 @@ pb.setUnjellyableForClass(Window, Window)
 #        Window.__init__(self, perspective, parent)
 #        perspective.createPanel(self)
 #pb.setUnjellyableForClass(Panel, Panel)
-#
-class Frame(Window):
-    def __init__(self, app, handler, parent, title=u"", position=DefaultPosition, size=DefaultSize, style=wx.DEFAULT_FRAME_STYLE):
-        Window.__init__(self, app, handler, parent, position=position, size=size, style=style)
-        self.title = title
-#    def getStateToCopy(self):
-#        d = Window.getStateToCopy(self)
-#        #if no styles have been added or remove, apply the default style
-#        if not self._appliedStyles and not self._removedStyles:
-#            d["style"] =  d["style"] | constants[DefaultFrameStyle]
-#        return d
-    def createRemote(self):
-        return self.handler.callRemote("createFrame", self)
-#    def show(self):
-#        return self.callRemote("show")
-#    def Centre(self, direction=wx.BOTH, centreOnScreen=False):
-#        return self.callRemote("centre", direction, centreOnScreen)
-#    def destroy(self):
-#        return self.callRemote("destroy")
-pb.setUnjellyableForClass(Frame, Frame)
-
-class Dialog(Window):
-    def __init__(self, app, handler, parent, title=u"", position=DefaultPosition, size=DefaultSize, style=wx.DEFAULT_DIALOG_STYLE):
-        Window.__init__(self, app, handler, parent, position=position, size=size, style=style)
-        self.title = title
-#    def getStateToCopy(self):
-#        d = Window.getStateToCopy(self)
-#        #if no styles have been added or remove, apply the default style
-#        if not self._appliedStyles and not self._removedStyles:
-#            d["style"] =  d["style"] | constants[DefaultDialogStyle]
-#        return d
-    def createRemote(self):
-        return self.handler.callRemote("createDialog", self)
-    def ShowModal(self):
-        return self.callRemote("ShowModal")
-pb.setUnjellyableForClass(Dialog, Dialog)
-
-#class MessageDialog(Dialog):
-#    def __init__(self, app, handler, parent, title=u"", caption=u"Message Box", position=DefaultPosition, size=DefaultSize):
-#        Dialog.__init__(self, app, handler, parent, position=position, size=size)
-#        self.title = title
-#    def getStateToCopy(self):
-#        d = Window.getStateToCopy(self)
-#        #if no styles have been added or remove, apply the default style
-#        if not self._appliedStyles and not self._removedStyles:
-#            d["style"] =  d["style"] | constants[OK] | constants[Cancel]
-#        return d
-#    def createRemote(self):
-#        return self.handler.callRemote("createMessageDialog", self)
-#pb.setUnjellyableForClass(Dialog, Dialog)
 
 #class Button(Window):
 #    CLICK = range(1) #python enum hack
