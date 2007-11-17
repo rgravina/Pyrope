@@ -1,11 +1,11 @@
 import wx
 from twisted.spread import pb
 from twisted.python import log
-#from twisted.internet.defer import inlineCallbacks
 from twisted.spread.flavors import NoSuchMethod
 from pyrope.model.shared import *
 
 class RemoteApplication(pb.Copyable, pb.RemoteCopy):
+    """Describes a Pyrope application, with a reference to the application handler (pb.Referenceable on the server, pb.RemoteReference on the client"""
     def __init__(self, app):
         self.name = app.name
         self.description = app.description
@@ -13,19 +13,16 @@ class RemoteApplication(pb.Copyable, pb.RemoteCopy):
 pb.setUnjellyableForClass(RemoteApplication, RemoteApplication)
 
 class PyropeReferenceable(pb.Referenceable):
+    """Subclasses pb.Referenceable so that it calles self.widget.somemethod when remote_somemethod connot be found.
+    This makes it simpler to wrap methods on wxWidgets classes."""
     def remoteMessageReceived(self, broker, message, args, kw):
         try:
             return pb.Referenceable.remoteMessageReceived(self, broker, message, args, kw)
         except NoSuchMethod:
             return getattr(self.widget, message)()
 
-class LocalReference(PyropeReferenceable):
-    def __init__(self, app, remote):
-        self.app = app
-        self.remote = remote
-        self.widget = createWidget()
-
-class LocalWindowReference(LocalReference):
+class LocalWindowReference(PyropeReferenceable):
+    """Manages a local wxWindow"""
     def __init__(self, app, widget, id, handlers):
         self.app = app
         self.widget = widget
@@ -33,14 +30,11 @@ class LocalWindowReference(LocalReference):
         self.boundEvents = []
         for event in handlers:
             self.boundEvents.append(event)
-    def remote_ClientToScreen(self, point):
-        point = self.widget.ClientToScreen(point)
-        #can't return a wxPoint directly over the network, so return a tuple instead
-        #TODO: generalise this
-        return (point.x, point.y)
     def remote_Destroy(self):
         self._destroy()
     def _destroy(self):
+        """Check to see if this is the last window open (for this app) and if so, call shutdown on the RemoteApplicationHandler instance.
+        Finally, destroy the widget."""
         self.app.topLevelWindows.remove(self.widget)
         if not self.app.topLevelWindows:
             self.app.shutdown()
@@ -55,13 +49,17 @@ class LocalWindowReference(LocalReference):
         if centreOnScreen:
             dir | wx.CENTRE_ON_SCREEN
         return self.widget.Centre(direction = dir)
+    def remote_ClientToScreen(self, point):
+        point = self.widget.ClientToScreen(point)
+        #can't return a wxPoint directly over the network, so return a tuple instead
+        #TODO: generalise this
+        return (point.x, point.y)
 
 class LocalFrameReference(LocalWindowReference):
     pass
 
 class LocalDialogReference(LocalWindowReference):
-    def remote_showModal(self):
-        return self.widget.ShowModal()
+    pass
 
 class WidgetFactory(object):
     @classmethod
