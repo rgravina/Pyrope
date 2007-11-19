@@ -47,34 +47,19 @@ class Application(pb.Viewable):
         widget = self.widgets[id]
         widget.eventHandlers[event](widget)
 
-class Window(pb.Copyable, pb.RemoteCopy):
-    def __init__(self, app, handler, parent, position=DefaultPosition, size=DefaultSize, style=0):
+class PyropeWidget(pb.Copyable, pb.RemoteCopy):
+    def __init__(self, app, handler):
         self.id = random.random()
         #TODO: figure out a way to not have to always pass the perspective as the first argument
-        #TODO: styles
         self.app = app
         app.widgets[self.id] = self
         self.handler = handler
-        self.parent = parent
-        self.position = position
-        self.size = size
-        self.style = style
         #the remote reference will be set when the client supplies it
         self.remote = None
         #for event handling
         self.eventHandlers = {}
     def createRemote(self):
         return self.handler.callRemote("createWidget", self)
-    def getStateToCopy(self):
-        d = self.__dict__.copy()
-        if self.parent:
-            d["parent"] = self.parent.id
-        del d["handler"]
-        d["eventHandlers"] = []
-        for event, fn in self.eventHandlers.items():
-            d["eventHandlers"].append(event)
-        del d["remote"]
-        return d
     def callRemote(self, functName, *args):
         if self.remote:
             return self.remote.callRemote(functName, *args)
@@ -82,17 +67,61 @@ class Window(pb.Copyable, pb.RemoteCopy):
             raise RemoteResourceNotCreatedException, "You must call createRemote before calling this method"
     def bind(self, event, handlerFunction):
         self.eventHandlers[event] = handlerFunction
+
+class Window(PyropeWidget):
+    def __init__(self, app, handler, parent, position=DefaultPosition, size=DefaultSize, style=0):
+        PyropeWidget.__init__(self, app, handler)
+        self.parent = parent
+        self.position = position
+        self.size = size
+        self.style = style
+        #other props
+        self._backgroundColour = None
+        self.sizer = None
+    def getStateToCopy(self):
+        d = self.__dict__.copy()
+        if self.parent:
+            d["parent"] = self.parent.id
+        if self.sizer:
+            d["sizer"] = self.sizer.id
+        del d["handler"]
+        d["eventHandlers"] = []
+        for event, fn in self.eventHandlers.items():
+            d["eventHandlers"].append(event)
+        del d["remote"]
+        return d
     def ClientToScreen(self, point):
         return self.callRemote("ClientToScreen", point)
+    def Hide(self):
+        return self.callRemote("Hide")
     def Show(self):
         return self.callRemote("Show")
     def Centre(self, direction=wx.BOTH, centreOnScreen=False):
         return self.callRemote("Centre", direction, centreOnScreen)
     def Destroy(self):
         return self.callRemote("Destroy")
+    def Disable(self):
+        return self.callRemote("Disable")
+    def Enable(self):
+        return self.callRemote("Enable")
 
+    def GetBackgroundColour(self):
+        #simply return the background colour
+        return self._backgroundColour
+    def SetBackgroundColour(self, colour):
+        #set the local background colour
+        self._backgroundColour = colour
+        #set remote
+        return self.callRemote("SetBackgroundColour", colour)
 pb.setUnjellyableForClass(Window, Window)
-#
+
+class BoxSizer(PyropeWidget):
+    def __init__(self, app, handler):
+        PyropeWidget.__init__(self, app, handler)
+        self.app = app
+        self.handler = handler
+pb.setUnjellyableForClass(BoxSizer, BoxSizer)
+
 class Frame(Window):
     def __init__(self, app, handler, parent, title=u"", position=DefaultPosition, size=DefaultSize, style=wx.DEFAULT_FRAME_STYLE):
         Window.__init__(self, app, handler, parent, position=position, size=size, style=style)
@@ -112,7 +141,7 @@ class MessageDialog(Dialog):
         Dialog.__init__(self, app, handler, parent, title=caption, position=position, size=size, style=style)
         self.message = message
 pb.setUnjellyableForClass(MessageDialog, MessageDialog)
-
+    
 #class BoxSizer(pb.Copyable, pb.RemoteCopy):
 #    def __init__(self, perspective):
 #        self.id = random.random()

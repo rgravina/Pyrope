@@ -54,6 +54,15 @@ class LocalWindowReference(PyropeReferenceable):
         #can't return a wxPoint directly over the network, so return a tuple instead
         #TODO: generalise this
         return (point.x, point.y)
+    def remote_SetBackgroundColour(self, colour):
+        return self.widget.SetBackgroundColour(colour)
+
+class LocalSizerReference(PyropeReferenceable):
+    """Manages a local wxSizer"""
+    def __init__(self, app, widget, id):
+        self.app = app
+        self.widget = widget
+        self.id = id
 
 class LocalFrameReference(LocalWindowReference):
     pass
@@ -62,14 +71,23 @@ class LocalDialogReference(LocalWindowReference):
     pass
 
 class WidgetFactory(object):
+    """A Factory that produces wxWidgets based on the class of the remote Pyrope widget passed to the constructor."""
     @classmethod
     def create(cls, app, remote):
+        #if the remote widget has a parent (supplied as an ID) get the coressponding wxWindow which is it's parent
         if remote.parent:
             parent = app.widgets[remote.parent]
         else: 
             parent = None
         widget, localRef = getattr(WidgetFactory, "create"+remote.__class__.__name__)(app, parent, remote)
+        #let the server know which pb.Referenceable is the remote reference for this widget
         app.app.server.callRemote("updateWidgetRemoteReference", localRef, remote.id)
+        if remote.sizer:
+            try:
+                widget.SetSizer(app.widgets[remote.sizer])
+            except KeyError:
+                sizer, lr = cls.createBoxSizer(app, remote.sizer)
+                widget.SetSizer(sizer)
         return widget, localRef
     @classmethod
     def createWindow(cls, app, parent, remote):
@@ -97,7 +115,12 @@ class WidgetFactory(object):
         dialog.Bind(wx.EVT_CLOSE, localRef.onClose)
         app.topLevelWindows.append(dialog)
         return dialog, localRef
-    
+    @classmethod
+    def createBoxSizer(cls, app, id):
+        sizer = wx.BoxSizer()
+        localRef = LocalSizerReference(app, sizer, id)
+        return sizer, localRef
+
 class RemoteApplicationHandler(pb.Referenceable):
     def __init__(self, app, appPresenter):
         self.app = app
