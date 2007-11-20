@@ -2,7 +2,7 @@ import wx
 from zope.interface import implements, Interface, Attribute
 from twisted.spread import pb
 from twisted.python import log
-#from twisted.internet.defer import inlineCallbacks
+from twisted.internet.defer import inlineCallbacks
 from pyrope.model.shared import *
 from pyrope.errors import RemoteResourceNotCreatedException
 
@@ -40,9 +40,6 @@ class Application(pb.Viewable):
     def shutdown(self, handler):
         """Subclasses should put any shitdown code here"""
         pass
-    def view_updateWidgetRemoteReference(self, perspective, remote, id):
-        widget = self.widgets[id]
-        widget.remote = remote
     def view_handleEvent(self, perspective, id, event):
         widget = self.widgets[id]
         widget.eventHandlers[event](widget)
@@ -58,8 +55,10 @@ class PyropeWidget(pb.Copyable, pb.RemoteCopy):
         self.remote = None
         #for event handling
         self.eventHandlers = {}
+    @inlineCallbacks
     def createRemote(self):
-        return self.handler.callRemote("createWidget", self)
+        #creates remote widget, and gets a pb.RemoteReference to it's client-side proxy
+        self.remote = yield self.handler.callRemote("createWidget", self)
     def callRemote(self, functName, *args):
         if self.remote:
             return self.remote.callRemote(functName, *args)
@@ -116,11 +115,31 @@ class Window(PyropeWidget):
 pb.setUnjellyableForClass(Window, Window)
 
 class BoxSizer(PyropeWidget):
-    def __init__(self, app, handler):
+    def __init__(self, app, handler, orientation):
         PyropeWidget.__init__(self, app, handler)
-        self.app = app
-        self.handler = handler
+        self.orientation = orientation
 pb.setUnjellyableForClass(BoxSizer, BoxSizer)
+
+class Panel(Window):
+    def __init__(self, app, handler, parent, position=DefaultPosition, size=DefaultSize, style=wx.TAB_TRAVERSAL):
+        Window.__init__(self, app, handler, parent, position=position, size=size, style=style)
+pb.setUnjellyableForClass(Panel, Panel)
+
+class TextBox(Window):
+    def __init__(self, app, handler, parent, value=u"", position=DefaultPosition, size=DefaultSize, style=0):
+        Window.__init__(self, app, handler, parent, position=position, size=size, style=style)
+        self.value = value
+pb.setUnjellyableForClass(TextBox, TextBox)
+
+class Label(Window):
+    def __init__(self, app, handler, parent, label=u"", position=DefaultPosition, size=DefaultSize, style=0):
+        Window.__init__(self, app, handler, parent, position=position, size=size, style=style)
+        self.label = label
+pb.setUnjellyableForClass(Label, Label)
+
+######################
+# Frames and Dialogs #
+######################
 
 class Frame(Window):
     def __init__(self, app, handler, parent, title=u"", position=DefaultPosition, size=DefaultSize, style=wx.DEFAULT_FRAME_STYLE):

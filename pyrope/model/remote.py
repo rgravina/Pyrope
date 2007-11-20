@@ -80,8 +80,6 @@ class WidgetFactory(object):
         else: 
             parent = None
         widget, localRef = getattr(WidgetFactory, "create"+remote.__class__.__name__)(app, parent, remote)
-        #let the server know which pb.Referenceable is the remote reference for this widget
-        app.app.server.callRemote("updateWidgetRemoteReference", localRef, remote.id)
         if remote.sizer:
             try:
                 widget.SetSizer(app.widgets[remote.sizer])
@@ -133,8 +131,12 @@ class RemoteApplicationHandler(pb.Referenceable):
             self.appPresenter.runningApplications.remove(self.app)
         return self.app.server.callRemote("shutdownApplication", self).addCallback(_shutdown)
     def remote_createWidget(self, remoteWidget):
+        #create widget and local proxy
         widget, localRef = WidgetFactory.create(self, remoteWidget)
+        #store in widgets dict
         self.widgets[remoteWidget.id] = widget
+        #return pb.RemoteReference to server
+        return localRef
 
 class PyropeClientHandler(pb.Referenceable):
     pass
