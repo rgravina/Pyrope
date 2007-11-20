@@ -44,6 +44,12 @@ class LocalWindowReference(PyropeReferenceable):
             self.app.app.server.callRemote("handleEvent", self.id, EventClose)
         else:
             self._destroy()
+    def handleEvent(self, event):
+        if event.GetEventType() == wx.EVT_TEXT.typeId:
+            eventType = EventText
+            data = self.widget.GetValue()
+        self.app.app.server.callRemote("handleEvent", self.id, eventType, data)
+        
     def remote_Centre(self, direction, centreOnScreen): 
         dir = direction
         if centreOnScreen:
@@ -70,6 +76,28 @@ class LocalFrameReference(LocalWindowReference):
 class LocalDialogReference(LocalWindowReference):
     pass
 
+class LocalTextBoxReference(LocalWindowReference):
+    pass
+
+class LocalLabelReference(LocalWindowReference):
+    def remote_SetLabel(self, label):
+        return self.widget.SetLabel(label)
+
+class SizerFactory(object):
+    @classmethod
+    def create(cls, app, remote):
+        sizer, localRef = getattr(SizerFactory, "create"+remote.__class__.__name__)(app, remote)
+        return sizer, localRef
+    @classmethod
+    def createBoxSizer(cls, app, remote):
+        sizer = wx.BoxSizer(remote.orientation)
+        localRef = LocalSizerReference(app, sizer, remote.id)
+        for widget in remote.widgets:
+            subwidget, subref = WidgetFactory.create(app, widget)
+            app.app.server.callRemote("updateRemote", widget.id, subref)
+            sizer.Add(subwidget)
+        return sizer, localRef
+
 class WidgetFactory(object):
     """A Factory that produces wxWidgets based on the class of the remote Pyrope widget passed to the constructor."""
     @classmethod
@@ -80,11 +108,13 @@ class WidgetFactory(object):
         else: 
             parent = None
         widget, localRef = getattr(WidgetFactory, "create"+remote.__class__.__name__)(app, parent, remote)
+        #store in widgets dict, because child widgets might need it
+        app.widgets[remote.id] = widget
         if remote.sizer:
             try:
-                widget.SetSizer(app.widgets[remote.sizer])
+                widget.SetSizer(app.widgets[remote.sizer.id])
             except KeyError:
-                sizer, lr = cls.createBoxSizer(app, remote.sizer)
+                sizer, lr = SizerFactory.createBoxSizer(app, remote.sizer)
                 widget.SetSizer(sizer)
         return widget, localRef
     @classmethod
@@ -114,10 +144,17 @@ class WidgetFactory(object):
         app.topLevelWindows.append(dialog)
         return dialog, localRef
     @classmethod
-    def createBoxSizer(cls, app, id):
-        sizer = wx.BoxSizer()
-        localRef = LocalSizerReference(app, sizer, id)
-        return sizer, localRef
+    def createTextBox(cls, app, parent, remote):
+        widget = wx.TextCtrl(parent, wx.ID_ANY, value=remote.value, size=remote.size, pos=remote.position, style=remote.style)
+        localRef = LocalTextBoxReference(app, widget, remote.id, remote.eventHandlers)
+        for event in remote.eventHandlers:
+            widget.Bind(events[event], localRef.handleEvent)
+        return widget, localRef
+    @classmethod
+    def createLabel(cls, app, parent, remote):
+        widget = wx.StaticText(parent, wx.ID_ANY, label=remote.value, size=remote.size, pos=remote.position, style=remote.style)
+        localRef = LocalLabelReference(app, widget, remote.id, remote.eventHandlers)
+        return widget, localRef
 
 class RemoteApplicationHandler(pb.Referenceable):
     def __init__(self, app, appPresenter):
@@ -133,8 +170,6 @@ class RemoteApplicationHandler(pb.Referenceable):
     def remote_createWidget(self, remoteWidget):
         #create widget and local proxy
         widget, localRef = WidgetFactory.create(self, remoteWidget)
-        #store in widgets dict
-        self.widgets[remoteWidget.id] = widget
         #return pb.RemoteReference to server
         return localRef
 

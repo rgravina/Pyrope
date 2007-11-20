@@ -40,10 +40,16 @@ class Application(pb.Viewable):
     def shutdown(self, handler):
         """Subclasses should put any shitdown code here"""
         pass
-    def view_handleEvent(self, perspective, id, event):
+    def view_handleEvent(self, perspective, id, event, data=None):
         widget = self.widgets[id]
+        if event == EventText:
+            widget._value = data
         widget.eventHandlers[event](widget)
-
+    def view_updateRemote(self, perspective, id, remote):
+        widget = self.widgets[id]
+        widget.remote = remote
+        print widget
+        
 class PyropeWidget(pb.Copyable, pb.RemoteCopy):
     def __init__(self, app, handler):
         self.id = random.random()
@@ -81,8 +87,6 @@ class Window(PyropeWidget):
         d = self.__dict__.copy()
         if self.parent:
             d["parent"] = self.parent.id
-        if self.sizer:
-            d["sizer"] = self.sizer.id
         del d["handler"]
         d["eventHandlers"] = []
         for event, fn in self.eventHandlers.items():
@@ -118,6 +122,9 @@ class BoxSizer(PyropeWidget):
     def __init__(self, app, handler, orientation):
         PyropeWidget.__init__(self, app, handler)
         self.orientation = orientation
+        self.widgets = []
+    def add(self, widget):
+        self.widgets.append(widget)
 pb.setUnjellyableForClass(BoxSizer, BoxSizer)
 
 class Panel(Window):
@@ -128,13 +135,25 @@ pb.setUnjellyableForClass(Panel, Panel)
 class TextBox(Window):
     def __init__(self, app, handler, parent, value=u"", position=DefaultPosition, size=DefaultSize, style=0):
         Window.__init__(self, app, handler, parent, position=position, size=size, style=style)
-        self.value = value
+        self._value = value
+    def _getValue(self):
+        return self._value
+    def setValue(self, value):
+        self._value = value
+        return self.callRemote("SetValue", value)
+    value = property(_getValue)
 pb.setUnjellyableForClass(TextBox, TextBox)
 
 class Label(Window):
-    def __init__(self, app, handler, parent, label=u"", position=DefaultPosition, size=DefaultSize, style=0):
+    def __init__(self, app, handler, parent, value=u"", position=DefaultPosition, size=DefaultSize, style=0):
         Window.__init__(self, app, handler, parent, position=position, size=size, style=style)
-        self.label = label
+        self._value = value
+    def _getValue(self):
+        return self._value
+    def setValue(self, value):
+        self._value = value
+        return self.callRemote("SetLabel", value)
+    value = property(_getValue)
 pb.setUnjellyableForClass(Label, Label)
 
 ######################
