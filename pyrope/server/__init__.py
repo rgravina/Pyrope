@@ -1,4 +1,2 @@
-#
-# server module
-#
+"""The Pyrope server module."""
 from server import *

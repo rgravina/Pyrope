@@ -1,3 +1,4 @@
+"""The Local (i.e. usually server-side) model."""
 import wx
 from zope.interface import implements, Interface, Attribute
 from twisted.spread import pb
@@ -12,51 +13,62 @@ import random
 
 class IApplication(Interface):
     """A Pyrope application"""
-    def start(self, perspective):
+    def start(self, handler):
         """Start up the application"""
 
+class RunningApplication(object):
+    """Represents an instance of a running application.
+    At this stage there are no methods, it just acts as a parameter object."""
+    def __init__(self, perspective, handler):
+        self.perspective = perspective     #users perpective 
+        self.handler = handler             #client-side application handler
+        self.widgets = {}                  #map id -> widget for this instance
+    
 class Application(pb.Viewable):
+    """Base class for user applications. Users should subclass this and override at least L{start}."""
     implements(IApplication)
     def __init__(self, name, description=None):
         self.name = name
         self.description = description
-        self.users = []    #i.e. users (perspectives) running this application
-        self.widgets = {}    #map id -> widget
+        self.runningApplications = {}
     def view_startApplication(self, perspective, handler):
         """Called by the client when a user wants to start up a new application."""
         #save the perspective for later use
         #TODO: make sure perspective is removed when app is closed
-        self.users.append(perspective)
+        run = RunningApplication(perspective, handler)
+        self.runningApplications[handler] = run
         #simply call the start method
-        self.start(handler)
+        self.start(run)
     def view_shutdownApplication(self, perspective, handler):
         """Called by the client when a user wants to shutdown the application."""
-        self.users.remove(perspective)
-        #simply call the start method
-        self.shutdown(handler)
-    def start(self, handler):
+        run =  self.runningApplications[handler]
+        #simply call the shutdown method
+        self.shutdown(run)
+        del self.runningApplications[handler]
+    def start(self, run):
         """Subclasses should start their applications here"""
         pass
-    def shutdown(self, handler):
-        """Subclasses should put any shitdown code here"""
+    def shutdown(self, run):
+        """Subclasses should put any shutdown code here"""
         pass
-    def view_handleEvent(self, perspective, id, event, data=None):
-        widget = self.widgets[id]
-        if event == EventText:
-            widget._value = data
-        widget.eventHandlers[event](widget)
-    def view_updateRemote(self, perspective, id, remote):
-        widget = self.widgets[id]
+#    def view_handleEvent(self, perspective, id, event, data=None):
+#        """API Stability: unstable
+#        Called by client when an event has been fired. """
+#        widget = self.widgets[id]
+#        if event == EventText:
+#            widget._value = data
+#        widget.eventHandlers[event](widget)
+    def view_updateRemote(self, perspective, id, handler, remote):
+        run = self.runningApplications[handler]
+        widget = run.widgets[id]
         widget.remote = remote
-        print widget
         
 class PyropeWidget(pb.Copyable, pb.RemoteCopy):
-    def __init__(self, app, handler):
+    def __init__(self, run):
         self.id = random.random()
         #TODO: figure out a way to not have to always pass the perspective as the first argument
-        self.app = app
-        app.widgets[self.id] = self
-        self.handler = handler
+        self.run = run
+        run.widgets[self.id] = self
         #the remote reference will be set when the client supplies it
         self.remote = None
         #for event handling
@@ -64,7 +76,7 @@ class PyropeWidget(pb.Copyable, pb.RemoteCopy):
     @inlineCallbacks
     def createRemote(self):
         #creates remote widget, and gets a pb.RemoteReference to it's client-side proxy
-        self.remote = yield self.handler.callRemote("createWidget", self)
+        self.remote = yield self.run.handler.callRemote("createWidget", self)
     def callRemote(self, functName, *args):
         if self.remote:
             return self.remote.callRemote(functName, *args)
@@ -74,25 +86,30 @@ class PyropeWidget(pb.Copyable, pb.RemoteCopy):
         self.eventHandlers[event] = handlerFunction
 
 class Window(PyropeWidget):
-    def __init__(self, app, handler, parent, position=DefaultPosition, size=DefaultSize, style=0):
-        PyropeWidget.__init__(self, app, handler)
+    def __init__(self, run, parent, position=DefaultPosition, size=DefaultSize, style=0):
+        PyropeWidget.__init__(self, run)
         self.parent = parent
+        if parent:
+            parent.addChild(self)
         self.position = position
         self.size = size
         self.style = style
         #other props
         self._backgroundColour = None
         self.sizer = None
+        self.children = []
     def getStateToCopy(self):
         d = self.__dict__.copy()
         if self.parent:
             d["parent"] = self.parent.id
-        del d["handler"]
+        del d["run"]
         d["eventHandlers"] = []
         for event, fn in self.eventHandlers.items():
             d["eventHandlers"].append(event)
         del d["remote"]
         return d
+    def addChild(self, child):
+        self.children.append(child)
     def ClientToScreen(self, point):
         return self.callRemote("ClientToScreen", point)
     def Hide(self):
@@ -133,8 +150,8 @@ class Panel(Window):
 pb.setUnjellyableForClass(Panel, Panel)
 
 class TextBox(Window):
-    def __init__(self, app, handler, parent, value=u"", position=DefaultPosition, size=DefaultSize, style=0):
-        Window.__init__(self, app, handler, parent, position=position, size=size, style=style)
+    def __init__(self, run, parent, value=u"", position=DefaultPosition, size=DefaultSize, style=0):
+        Window.__init__(self, run, parent, position=position, size=size, style=style)
         self._value = value
     def _getValue(self):
         return self._value
@@ -145,8 +162,8 @@ class TextBox(Window):
 pb.setUnjellyableForClass(TextBox, TextBox)
 
 class Label(Window):
-    def __init__(self, app, handler, parent, value=u"", position=DefaultPosition, size=DefaultSize, style=0):
-        Window.__init__(self, app, handler, parent, position=position, size=size, style=style)
+    def __init__(self, run, parent, value=u"", position=DefaultPosition, size=DefaultSize, style=0):
+        Window.__init__(self, run, parent, position=position, size=size, style=style)
         self._value = value
     def _getValue(self):
         return self._value
@@ -161,10 +178,16 @@ pb.setUnjellyableForClass(Label, Label)
 ######################
 
 class Frame(Window):
-    def __init__(self, app, handler, parent, title=u"", position=DefaultPosition, size=DefaultSize, style=wx.DEFAULT_FRAME_STYLE):
-        Window.__init__(self, app, handler, parent, position=position, size=size, style=style)
+    def __init__(self, run, parent, title=u"", position=DefaultPosition, size=DefaultSize, style=wx.DEFAULT_FRAME_STYLE):
+        Window.__init__(self, run, parent, position=position, size=size, style=style)
         self.title = title
 pb.setUnjellyableForClass(Frame, Frame)
+
+class SizedFrame(Window):
+    def __init__(self, run, parent, title=u"", position=DefaultPosition, size=DefaultSize, style=wx.DEFAULT_FRAME_STYLE):
+        Window.__init__(self, run, parent, position=position, size=size, style=style)
+        self.title = title
+pb.setUnjellyableForClass(SizedFrame, SizedFrame)
 
 class Dialog(Window):
     def __init__(self, app, handler, parent, title=u"", position=DefaultPosition, size=DefaultSize, style=wx.DEFAULT_DIALOG_STYLE):

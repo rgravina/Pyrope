@@ -1,11 +1,13 @@
+"""The Remote (i.e. usually client-side) model."""
 import wx
+import wxaddons.sized_controls as sc
 from twisted.spread import pb
 from twisted.python import log
 from twisted.spread.flavors import NoSuchMethod
 from pyrope.model.shared import *
 
 class RemoteApplication(pb.Copyable, pb.RemoteCopy):
-    """Describes a Pyrope application, with a reference to the application handler (pb.Referenceable on the server, pb.RemoteReference on the client"""
+    """Describes a Pyrope application, with a reference to the application handler (pb.Referenceable on the server, pb.RemoteReference on the client)"""
     def __init__(self, app):
         self.name = app.name
         self.description = app.description
@@ -13,9 +15,10 @@ class RemoteApplication(pb.Copyable, pb.RemoteCopy):
 pb.setUnjellyableForClass(RemoteApplication, RemoteApplication)
 
 class PyropeReferenceable(pb.Referenceable):
-    """Subclasses pb.Referenceable so that it calles self.widget.somemethod when remote_somemethod connot be found.
+    """Subclasses pb.Referenceable so that it calls self.widget.somemethod when remote_somemethod connot be found.
     This makes it simpler to wrap methods on wxWidgets classes."""
     def remoteMessageReceived(self, broker, message, args, kw):
+        """ Calls self.widget.somemethod when remote_somemethod connot be found"""
         try:
             return pb.Referenceable.remoteMessageReceived(self, broker, message, args, kw)
         except NoSuchMethod:
@@ -73,6 +76,9 @@ class LocalSizerReference(PyropeReferenceable):
 class LocalFrameReference(LocalWindowReference):
     pass
 
+class LocalSizedFrameReference(LocalWindowReference):
+    pass
+
 class LocalDialogReference(LocalWindowReference):
     pass
 
@@ -86,17 +92,17 @@ class LocalLabelReference(LocalWindowReference):
 class SizerFactory(object):
     @classmethod
     def create(cls, app, remote):
-        sizer, localRef = getattr(SizerFactory, "create"+remote.__class__.__name__)(app, remote)
-        return sizer, localRef
+        localRef = getattr(SizerFactory, "create"+remote.__class__.__name__)(app, remote)
+        return localRef
     @classmethod
     def createBoxSizer(cls, app, remote):
         sizer = wx.BoxSizer(remote.orientation)
         localRef = LocalSizerReference(app, sizer, remote.id)
         for widget in remote.widgets:
-            subwidget, subref = WidgetFactory.create(app, widget)
+            subref = WidgetFactory.create(app, widget)
             app.app.server.callRemote("updateRemote", widget.id, subref)
-            sizer.Add(subwidget)
-        return sizer, localRef
+            sizer.Add(subref.widget)
+        return localRef
 
 class WidgetFactory(object):
     """A Factory that produces wxWidgets based on the class of the remote Pyrope widget passed to the constructor."""
@@ -107,54 +113,70 @@ class WidgetFactory(object):
             parent = app.widgets[remote.parent]
         else: 
             parent = None
-        widget, localRef = getattr(WidgetFactory, "create"+remote.__class__.__name__)(app, parent, remote)
+        localRef = getattr(WidgetFactory, "create"+remote.__class__.__name__)(app, parent, remote)
         #store in widgets dict, because child widgets might need it
-        app.widgets[remote.id] = widget
-        if remote.sizer:
-            try:
-                widget.SetSizer(app.widgets[remote.sizer.id])
-            except KeyError:
-                sizer, lr = SizerFactory.createBoxSizer(app, remote.sizer)
-                widget.SetSizer(sizer)
-        return widget, localRef
+        app.widgets[remote.id] = localRef.widget
+        if remote.children:
+            for child in remote.children:
+                childRef = WidgetFactory.create(app, child)
+                app.app.server.callRemote("updateRemote", child.id, app, childRef)
+                
+#        if remote.sizer:
+#            try:
+#                widget.SetSizer(app.widgets[remote.sizer.id])
+#            except KeyError:
+#                sizer, lr = SizerFactory.createBoxSizer(app, remote.sizer)
+#                widget.SetSizer(sizer)
+        return localRef
     @classmethod
     def createWindow(cls, app, parent, remote):
         window = wx.Window(parent, wx.ID_ANY, size=remote.size, pos=remote.position, style=remote.style)
         localRef = LocalWindowReference(app, window, remote.id, remote.eventHandlers)
-        return window, localRef
+        return localRef
     @classmethod
     def createFrame(cls, app, parent, remote):
         frame = wx.Frame(parent, wx.ID_ANY, remote.title, size=remote.size, pos=remote.position, style=remote.style)
         localRef = LocalFrameReference(app, frame, remote.id, remote.eventHandlers)
         frame.Bind(wx.EVT_CLOSE, localRef.onClose)
         app.topLevelWindows.append(frame)
-        return frame, localRef
+        return localRef
+    @classmethod
+    def createSizedFrame(cls, app, parent, remote):
+        frame = sc.SizedFrame(parent, wx.ID_ANY, remote.title, size=remote.size, pos=remote.position, style=remote.style)
+        panel = frame.GetContentsPane()
+        panel.SetSizerType("vertical")
+        localRef = LocalSizedFrameReference(app, frame, remote.id, remote.eventHandlers)
+        frame.Bind(wx.EVT_CLOSE, localRef.onClose)
+        app.topLevelWindows.append(frame)
+        return localRef
     @classmethod
     def createDialog(cls, app, parent, remote):
         dialog = wx.Dialog(parent, wx.ID_ANY, remote.title, size=remote.size, pos=remote.position, style=remote.style)
         localRef = LocalDialogReference(app, dialog, remote.id, remote.eventHandlers)
         dialog.Bind(wx.EVT_CLOSE, localRef.onClose)
         self.topLevelWindows.append(dialog)
-        return dialog, localRef
+        return localRef
     @classmethod
     def createMessageDialog(cls, app, parent, remote):
         dialog = wx.MessageDialog(parent, remote.message, caption=remote.title, pos=remote.position, style=remote.style)
         localRef = LocalDialogReference(app, dialog, remote.id, remote.eventHandlers)
         dialog.Bind(wx.EVT_CLOSE, localRef.onClose)
         app.topLevelWindows.append(dialog)
-        return dialog, localRef
+        return localRef
     @classmethod
     def createTextBox(cls, app, parent, remote):
-        widget = wx.TextCtrl(parent, wx.ID_ANY, value=remote.value, size=remote.size, pos=remote.position, style=remote.style)
+        panel = parent.GetContentsPane()
+        widget = wx.TextCtrl(panel, wx.ID_ANY, value=remote.value, size=remote.size, pos=remote.position, style=remote.style)
         localRef = LocalTextBoxReference(app, widget, remote.id, remote.eventHandlers)
         for event in remote.eventHandlers:
             widget.Bind(events[event], localRef.handleEvent)
-        return widget, localRef
+        return localRef
     @classmethod
     def createLabel(cls, app, parent, remote):
-        widget = wx.StaticText(parent, wx.ID_ANY, label=remote.value, size=remote.size, pos=remote.position, style=remote.style)
+        panel = parent.GetContentsPane()
+        widget = wx.StaticText(panel, wx.ID_ANY, label=remote.value, size=remote.size, pos=remote.position, style=remote.style)
         localRef = LocalLabelReference(app, widget, remote.id, remote.eventHandlers)
-        return widget, localRef
+        return localRef
 
 class RemoteApplicationHandler(pb.Referenceable):
     def __init__(self, app, appPresenter):
@@ -169,37 +191,8 @@ class RemoteApplicationHandler(pb.Referenceable):
         return self.app.server.callRemote("shutdownApplication", self).addCallback(_shutdown)
     def remote_createWidget(self, remoteWidget):
         #create widget and local proxy
-        widget, localRef = WidgetFactory.create(self, remoteWidget)
         #return pb.RemoteReference to server
-        return localRef
+        return  WidgetFactory.create(self, remoteWidget)
 
 class PyropeClientHandler(pb.Referenceable):
     pass
-#    def __init__(self):
-#        self.widgets = {}
-#    def remote_createFrame(self, remoteFrame):
-#        #create wxFrame
-#        frame = wx.Frame(None, wx.ID_ANY, remoteFrame.title)
-#        #associate Pyrope Frame ID with wxWidget
-#        self.widgets[remoteFrame.id] = frame    
-#    def remote_show(self, id):
-#        self.widgets[id].Show()
-#    def remote_createPanel(self, remotePanel):
-#        parent = self.widgets[remotePanel.parent]        
-#        panel = wx.Panel(parent, wx.ID_ANY)
-#        self.widgets[remotePanel.id] = panel
-#    def remote_createButton(self, remoteButton):
-#        parent = self.widgets[remoteButton.parent]        
-#        button = wx.Button(parent, wx.ID_ANY, remoteButton.label)
-#        self.widgets[remoteButton.id] = button
-#    def remote_createNotebook(self, remoteNotebook):
-#        parent = self.widgets[remoteNotebook.parent]
-#        notebook = wx.Notebook(parent, wx.ID_ANY)
-#        self.widgets[remoteNotebook.id] = notebook
-#    def remote_addPage(self, notebookID, panelID, title):
-#        notebook = self.widgets[notebookID]
-#        panel = self.widgets[panelID]
-#        notebook.AddPage(panel, title)
-#    def remote_createBoxSizer(self, remoteSizer):
-#        sizer = wx.BoxSizer()
-#        self.widgets[remoteSizer.id] = sizer
