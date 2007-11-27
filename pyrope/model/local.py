@@ -89,7 +89,7 @@ class Window(PyropeWidget):
     def __init__(self, run, parent, position=DefaultPosition, size=DefaultSize, style=0):
         PyropeWidget.__init__(self, run)
         self.parent = parent
-        if parent:
+        if parent != None:
             parent.addChild(self)
         self.position = position
         self.size = size
@@ -133,21 +133,23 @@ class Window(PyropeWidget):
         self._backgroundColour = colour
         #set remote
         return self.callRemote("SetBackgroundColour", colour)
+    #XXX: this doesn't work for setter!
+    backgroundColour = property(GetBackgroundColour, SetBackgroundColour)
 pb.setUnjellyableForClass(Window, Window)
 
-class BoxSizer(PyropeWidget):
-    def __init__(self, app, handler, orientation):
-        PyropeWidget.__init__(self, app, handler)
-        self.orientation = orientation
-        self.widgets = []
-    def add(self, widget):
-        self.widgets.append(widget)
-pb.setUnjellyableForClass(BoxSizer, BoxSizer)
-
-class Panel(Window):
-    def __init__(self, app, handler, parent, position=DefaultPosition, size=DefaultSize, style=wx.TAB_TRAVERSAL):
-        Window.__init__(self, app, handler, parent, position=position, size=size, style=style)
-pb.setUnjellyableForClass(Panel, Panel)
+#class BoxSizer(PyropeWidget):
+#    def __init__(self, app, handler, orientation):
+#        PyropeWidget.__init__(self, app, handler)
+#        self.orientation = orientation
+#        self.widgets = []
+#    def add(self, widget):
+#        self.widgets.append(widget)
+#pb.setUnjellyableForClass(BoxSizer, BoxSizer)
+#
+#class Panel(Window):
+#    def __init__(self, app, handler, parent, position=DefaultPosition, size=DefaultSize, style=wx.TAB_TRAVERSAL):
+#        Window.__init__(self, app, handler, parent, position=position, size=size, style=style)
+#pb.setUnjellyableForClass(Panel, Panel)
 
 class TextBox(Window):
     def __init__(self, run, parent, value=u"", position=DefaultPosition, size=DefaultSize, style=0):
@@ -184,9 +186,10 @@ class Frame(Window):
 pb.setUnjellyableForClass(Frame, Frame)
 
 class SizedFrame(Window):
-    def __init__(self, run, parent, title=u"", position=DefaultPosition, size=DefaultSize, style=wx.DEFAULT_FRAME_STYLE):
+    def __init__(self, run, parent, title=u"", position=DefaultPosition, size=DefaultSize, style=wx.DEFAULT_FRAME_STYLE, sizerType="horizontal"):
         Window.__init__(self, run, parent, position=position, size=size, style=style)
         self.title = title
+        self.sizerType = sizerType
 pb.setUnjellyableForClass(SizedFrame, SizedFrame)
 
 class Dialog(Window):
@@ -202,7 +205,15 @@ class MessageDialog(Dialog):
         Dialog.__init__(self, app, handler, parent, title=caption, position=position, size=size, style=style)
         self.message = message
 pb.setUnjellyableForClass(MessageDialog, MessageDialog)
-    
+
+#########
+# Panel #
+#########
+class SizedPanel(Window):
+    def __init__(self, run, parent, position=DefaultPosition, size=DefaultSize):
+        Window.__init__(self, run, parent, position=position, size=size)
+pb.setUnjellyableForClass(SizedPanel, SizedPanel)
+   
 #class BoxSizer(pb.Copyable, pb.RemoteCopy):
 #    def __init__(self, perspective):
 #        self.id = random.random()

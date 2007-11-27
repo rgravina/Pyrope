@@ -79,6 +79,9 @@ class LocalFrameReference(LocalWindowReference):
 class LocalSizedFrameReference(LocalWindowReference):
     pass
 
+class LocalSizedPanelReference(LocalWindowReference):
+    pass
+
 class LocalDialogReference(LocalWindowReference):
     pass
 
@@ -144,10 +147,16 @@ class WidgetFactory(object):
     def createSizedFrame(cls, app, parent, remote):
         frame = sc.SizedFrame(parent, wx.ID_ANY, remote.title, size=remote.size, pos=remote.position, style=remote.style)
         panel = frame.GetContentsPane()
-        panel.SetSizerType("vertical")
+        panel.SetSizerType(remote.sizerType)
         localRef = LocalSizedFrameReference(app, frame, remote.id, remote.eventHandlers)
         frame.Bind(wx.EVT_CLOSE, localRef.onClose)
         app.topLevelWindows.append(frame)
+        return localRef
+    @classmethod
+    def createSizedPanel(cls, app, parent, remote):
+        parentPanel = parent.GetContentsPane()
+        panel = sc.SizedPanel(parentPanel, wx.ID_ANY, size=remote.size, pos=remote.position, style=remote.style)
+        localRef = LocalSizedPanelReference(app, panel, remote.id, remote.eventHandlers)
         return localRef
     @classmethod
     def createDialog(cls, app, parent, remote):
@@ -187,7 +196,7 @@ class RemoteApplicationHandler(pb.Referenceable):
         self.widgets = {}
     def shutdown(self):
         def _shutdown(result):
-            self.appPresenter.runningApplications.remove(self.app)
+            self.appPresenter.shutdown(self.app)
         return self.app.server.callRemote("shutdownApplication", self).addCallback(_shutdown)
     def remote_createWidget(self, remoteWidget):
         #create widget and local proxy
@@ -196,3 +205,4 @@ class RemoteApplicationHandler(pb.Referenceable):
 
 class PyropeClientHandler(pb.Referenceable):
     pass
+

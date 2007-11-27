@@ -34,14 +34,21 @@ class PyropeApplicationPresenter(ApplicationPresenter):
 
     def onConnect(self, perspective):
         def _gotApplications(applications):
-            model = ListofObjectsModel(applications, ["name"])
-            view = SimpleOpenView(model, "Applications on "+self.model.host, "Applications", openButtonText="Run")
-            presenter = OpenApplicationPresenter(model, view, SimpleOpenInteractor())
-            self.presenterLogon.onClose()
+            self.applications =  ListofObjectsModel(applications, ["name"])
+            view = SimpleOpenView(self.applications, "Applications on "+self.model.host, "Applications", openButtonText="Run")
+            self.presenterOpen = OpenApplicationPresenter(self.applications, view, SimpleOpenInteractor())
+            self.presenterLogon.view.Hide()
+            self.presenterOpen.start()
         ApplicationPresenter.onConnect(self, perspective)
         #now we have the persective, we can ask the server what applications are available
         self.callRemote("getApplications").addCallback(_gotApplications)
         
+    def shutdown(self, app):
+        self.runningApplications.remove(app)
+        view = SimpleOpenView(self.applications, "Applications on "+self.model.host, "Applications", openButtonText="Run")
+        self.presenterOpen = OpenApplicationPresenter(self.applications, view, SimpleOpenInteractor())
+        self.presenterOpen.start()
+
 class LogonPresenter(Presenter, WindowPresenterMixin):
     def __init__(self, view, interactor):
         Presenter.__init__(self, None, view, interactor)
@@ -65,7 +72,10 @@ class LogonPresenter(Presenter, WindowPresenterMixin):
     def connect(self):
         PyropeApplicationPresenter.getInstance().connect()
 
-class OpenApplicationPresenter(SimpleOpenPresenter):        
+class OpenApplicationPresenter(SimpleOpenPresenter):
+    def onClose(self):
+        PyropeApplicationPresenter.getInstance().presenterLogon.view.Show()
+        
     def onOpen(self):
         #TODO: uncomment this when figured out how to know when last window of application is closed (not Pyrope, the running app)
         def _openedApplication(result, application):
