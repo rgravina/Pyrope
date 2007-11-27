@@ -192,19 +192,19 @@ class SizedFrame(Window):
         self.sizerType = sizerType
 pb.setUnjellyableForClass(SizedFrame, SizedFrame)
 
-class Dialog(Window):
-    def __init__(self, app, handler, parent, title=u"", position=DefaultPosition, size=DefaultSize, style=wx.DEFAULT_DIALOG_STYLE):
-        Window.__init__(self, app, handler, parent, position=position, size=size, style=style)
-        self.title = title
-    def ShowModal(self):
-        return self.callRemote("ShowModal")
-pb.setUnjellyableForClass(Dialog, Dialog)
-
-class MessageDialog(Dialog):
-    def __init__(self, app, handler, parent, message, caption=u"Message Box", position=DefaultPosition, size=DefaultSize, style=wx.OK | wx.CANCEL):
-        Dialog.__init__(self, app, handler, parent, title=caption, position=position, size=size, style=style)
-        self.message = message
-pb.setUnjellyableForClass(MessageDialog, MessageDialog)
+#class Dialog(Window):
+#    def __init__(self, app, handler, parent, title=u"", position=DefaultPosition, size=DefaultSize, style=wx.DEFAULT_DIALOG_STYLE):
+#        Window.__init__(self, app, handler, parent, position=position, size=size, style=style)
+#        self.title = title
+#    def ShowModal(self):
+#        return self.callRemote("ShowModal")
+#pb.setUnjellyableForClass(Dialog, Dialog)
+#
+#class MessageDialog(Dialog):
+#    def __init__(self, app, handler, parent, message, caption=u"Message Box", position=DefaultPosition, size=DefaultSize, style=wx.OK | wx.CANCEL):
+#        Dialog.__init__(self, app, handler, parent, title=caption, position=position, size=size, style=style)
+#        self.message = message
+#pb.setUnjellyableForClass(MessageDialog, MessageDialog)
 
 #########
 # Panel #
@@ -213,6 +213,16 @@ class SizedPanel(Window):
     def __init__(self, run, parent, position=DefaultPosition, size=DefaultSize):
         Window.__init__(self, run, parent, position=position, size=size)
 pb.setUnjellyableForClass(SizedPanel, SizedPanel)
+
+###########
+# Widgets #
+###########
+class Button(Window):
+    CLICK = range(1) #python enum hack
+    def __init__(self, run, parent, value=u""):
+        Window.__init__(self, run, parent)
+        self.value = value
+pb.setUnjellyableForClass(Button, Button)
    
 #class BoxSizer(pb.Copyable, pb.RemoteCopy):
 #    def __init__(self, perspective):

@@ -88,6 +88,9 @@ class LocalDialogReference(LocalWindowReference):
 class LocalTextBoxReference(LocalWindowReference):
     pass
 
+class LocalButtonReference(LocalWindowReference):
+    pass
+
 class LocalLabelReference(LocalWindowReference):
     def remote_SetLabel(self, label):
         return self.widget.SetLabel(label)
@@ -185,6 +188,12 @@ class WidgetFactory(object):
         panel = parent.GetContentsPane()
         widget = wx.StaticText(panel, wx.ID_ANY, label=remote.value, size=remote.size, pos=remote.position, style=remote.style)
         localRef = LocalLabelReference(app, widget, remote.id, remote.eventHandlers)
+        return localRef
+    @classmethod
+    def createButton(cls, app, parent, remote):
+        panel = parent.GetContentsPane()
+        widget = wx.Button(panel, wx.ID_ANY, label=remote.value, size=remote.size, pos=remote.position, style=remote.style)
+        localRef = LocalButtonReference(app, widget, remote.id, remote.eventHandlers)
         return localRef
 
 class RemoteApplicationHandler(pb.Referenceable):
