@@ -63,10 +63,10 @@ class Application(pb.Viewable):
         widget = run.widgets[id]
         widget.remote = remote
         
-class PyropeWidget(pb.Copyable, pb.RemoteCopy):
+class PyropeWidget(pb.Referenceable):
     def __init__(self, run):
         self.id = random.random()
-        #TODO: figure out a way to not have to always pass the perspective as the first argument
+        self.type = self.__class__.__name__
         self.run = run
         run.widgets[self.id] = self
         #the remote reference will be set when the client supplies it
@@ -76,7 +76,7 @@ class PyropeWidget(pb.Copyable, pb.RemoteCopy):
     @inlineCallbacks
     def createRemote(self):
         #creates remote widget, and gets a pb.RemoteReference to it's client-side proxy
-        self.remote = yield self.run.handler.callRemote("createWidget", self)
+        self.remote = yield self.run.handler.callRemote("createWidget", self, self.getStateToCopy())
     def callRemote(self, functName, *args):
         if self.remote:
             return self.remote.callRemote(functName, *args)
@@ -84,6 +84,10 @@ class PyropeWidget(pb.Copyable, pb.RemoteCopy):
             raise RemoteResourceNotCreatedException, "You must call createRemote before calling this method"
     def bind(self, event, handlerFunction):
         self.eventHandlers[event] = handlerFunction
+    def remote_handleEvent(self, event):
+        """API Stability: unstable
+        Called by client when an event has been fired. """
+        self.eventHandlers[event](widget)
 
 class Window(PyropeWidget):
     def __init__(self, run, parent, position=DefaultPosition, size=DefaultSize, style=0):
@@ -135,7 +139,6 @@ class Window(PyropeWidget):
         return self.callRemote("SetBackgroundColour", colour)
     #XXX: this doesn't work for setter!
     backgroundColour = property(GetBackgroundColour, SetBackgroundColour)
-pb.setUnjellyableForClass(Window, Window)
 
 #class BoxSizer(PyropeWidget):
 #    def __init__(self, app, handler, orientation):
@@ -154,26 +157,12 @@ pb.setUnjellyableForClass(Window, Window)
 class TextBox(Window):
     def __init__(self, run, parent, value=u"", position=DefaultPosition, size=DefaultSize, style=0):
         Window.__init__(self, run, parent, position=position, size=size, style=style)
-        self._value = value
-    def _getValue(self):
-        return self._value
-    def setValue(self, value):
-        self._value = value
-        return self.callRemote("SetValue", value)
-    value = property(_getValue)
-pb.setUnjellyableForClass(TextBox, TextBox)
+        self.value = value
 
 class Label(Window):
     def __init__(self, run, parent, value=u"", position=DefaultPosition, size=DefaultSize, style=0):
         Window.__init__(self, run, parent, position=position, size=size, style=style)
-        self._value = value
-    def _getValue(self):
-        return self._value
-    def setValue(self, value):
-        self._value = value
-        return self.callRemote("SetLabel", value)
-    value = property(_getValue)
-pb.setUnjellyableForClass(Label, Label)
+        self.value = value
 
 ######################
 # Frames and Dialogs #
@@ -183,14 +172,12 @@ class Frame(Window):
     def __init__(self, run, parent, title=u"", position=DefaultPosition, size=DefaultSize, style=wx.DEFAULT_FRAME_STYLE):
         Window.__init__(self, run, parent, position=position, size=size, style=style)
         self.title = title
-pb.setUnjellyableForClass(Frame, Frame)
 
 class SizedFrame(Window):
     def __init__(self, run, parent, title=u"", position=DefaultPosition, size=DefaultSize, style=wx.DEFAULT_FRAME_STYLE, sizerType="horizontal"):
         Window.__init__(self, run, parent, position=position, size=size, style=style)
         self.title = title
         self.sizerType = sizerType
-pb.setUnjellyableForClass(SizedFrame, SizedFrame)
 
 #class Dialog(Window):
 #    def __init__(self, app, handler, parent, title=u"", position=DefaultPosition, size=DefaultSize, style=wx.DEFAULT_DIALOG_STYLE):
@@ -212,7 +199,6 @@ pb.setUnjellyableForClass(SizedFrame, SizedFrame)
 class SizedPanel(Window):
     def __init__(self, run, parent, position=DefaultPosition, size=DefaultSize):
         Window.__init__(self, run, parent, position=position, size=size)
-pb.setUnjellyableForClass(SizedPanel, SizedPanel)
 
 ###########
 # Widgets #
@@ -222,7 +208,6 @@ class Button(Window):
     def __init__(self, run, parent, value=u""):
         Window.__init__(self, run, parent)
         self.value = value
-pb.setUnjellyableForClass(Button, Button)
    
 #class BoxSizer(pb.Copyable, pb.RemoteCopy):
 #    def __init__(self, perspective):
