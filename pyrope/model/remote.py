@@ -153,12 +153,12 @@ class WidgetFactory(object):
         frame.Bind(wx.EVT_CLOSE, localRef.onClose)
         app.topLevelWindows.append(frame)
         return localRef
-#    @classmethod
-#    def createSizedPanel(cls, app, parent, remote):
-#        parentPanel = parent.GetContentsPane()
-#        panel = sc.SizedPanel(parentPanel, wx.ID_ANY, size=remote.size, pos=remote.position, style=remote.style)
-#        localRef = SizedPanelReference(app, panel, remote.id, remote.eventHandlers)
-#        return localRef
+    @classmethod
+    def createSizedPanel(cls, app, parent, remote, data):
+        parentPanel = parent.GetContentsPane()
+        panel = sc.SizedPanel(parentPanel, wx.ID_ANY, size=data["size"], pos=data["position"], style=data["style"])
+        localRef = SizedPanelReference(app, panel, remote, data["eventHandlers"])
+        return localRef
 #    @classmethod
 #    def createDialog(cls, app, parent, remote):
 #        dialog = wx.Dialog(parent, wx.ID_ANY, remote.title, size=remote.size, pos=remote.position, style=remote.style)
