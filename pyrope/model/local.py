@@ -64,9 +64,9 @@ class Application(pb.Viewable):
         widget.remote = remote
         
 class PyropeWidget(pb.Referenceable):
+    type = "PyropeWidget"
     def __init__(self, run):
         self.id = random.random()
-        self.type = self.__class__.__name__
         self.run = run
         run.widgets[self.id] = self
         #the remote reference will be set when the client supplies it
@@ -90,6 +90,7 @@ class PyropeWidget(pb.Referenceable):
         self.eventHandlers[event](widget)
 
 class Window(PyropeWidget):
+    type = "Window"
     def __init__(self, run, parent, position=DefaultPosition, size=DefaultSize, style=0):
         PyropeWidget.__init__(self, run)
         self.parent = parent
@@ -104,6 +105,7 @@ class Window(PyropeWidget):
         self.children = []
     def getStateToCopy(self):
         d = self.__dict__.copy()
+        d["type"] = self.__class__.type
         if self.parent:
             d["parent"] = self.parent.id
         del d["run"]
@@ -155,11 +157,13 @@ class Window(PyropeWidget):
 #pb.setUnjellyableForClass(Panel, Panel)
 
 class TextBox(Window):
+    type = "TextBox"
     def __init__(self, run, parent, value=u"", position=DefaultPosition, size=DefaultSize, style=0):
         Window.__init__(self, run, parent, position=position, size=size, style=style)
         self.value = value
 
 class Label(Window):
+    type = "Label"
     def __init__(self, run, parent, value=u"", position=DefaultPosition, size=DefaultSize, style=0):
         Window.__init__(self, run, parent, position=position, size=size, style=style)
         self.value = value
@@ -169,11 +173,13 @@ class Label(Window):
 ######################
 
 class Frame(Window):
+    type = "Frame"
     def __init__(self, run, parent, title=u"", position=DefaultPosition, size=DefaultSize, style=wx.DEFAULT_FRAME_STYLE):
         Window.__init__(self, run, parent, position=position, size=size, style=style)
         self.title = title
 
 class SizedFrame(Window):
+    type = "SizedFrame"
     def __init__(self, run, parent, title=u"", position=DefaultPosition, size=DefaultSize, style=wx.DEFAULT_FRAME_STYLE, sizerType="horizontal"):
         Window.__init__(self, run, parent, position=position, size=size, style=style)
         self.title = title
@@ -197,6 +203,7 @@ class SizedFrame(Window):
 # Panel #
 #########
 class SizedPanel(Window):
+    type = "SizedPanel"
     def __init__(self, run, parent, position=DefaultPosition, size=DefaultSize):
         Window.__init__(self, run, parent, position=position, size=size)
 
@@ -204,6 +211,7 @@ class SizedPanel(Window):
 # Widgets #
 ###########
 class Button(Window):
+    type = "Button"
     CLICK = range(1) #python enum hack
     def __init__(self, run, parent, value=u""):
         Window.__init__(self, run, parent)
