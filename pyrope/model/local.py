@@ -103,8 +103,6 @@ class Window(PyropeWidget):
     def getConstructorData(self):
         d = self.__dict__.copy()
         d["type"] = self.__class__.type
-        if self.parent:
-            d["parent"] = self.parent.id
         del d["run"]
         d["eventHandlers"] = []
         for event, fn in self.eventHandlers.items():
@@ -112,7 +110,7 @@ class Window(PyropeWidget):
         del d["remote"]
         d["children"] = []
         for child in self.children:
-            d["children"].append(child, child.getConstructorData())
+            d["children"].append((child, child.getConstructorData()))
         return d
     def addChild(self, child):
         self.children.append(child)
