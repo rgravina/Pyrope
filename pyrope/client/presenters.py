@@ -23,7 +23,11 @@ class PyropeApplicationPresenter(ApplicationPresenter):
         #progress bar
         self.progress = None
         self.localHandler = PyropeClientHandler()
-        
+
+        self.applications = None
+        self.presenterOpen = None
+        self.presenterLogon = None
+
     def initView(self):
         self.presenterLogon = LogonPresenter(LogonView(None), LogonInteractor());
 
@@ -34,20 +38,23 @@ class PyropeApplicationPresenter(ApplicationPresenter):
 
     def onConnect(self, perspective):
         def _gotApplications(applications):
-            self.applications =  ListofObjectsModel(applications, ["name"])
-            view = SimpleOpenView(self.applications, "Applications on "+self.model.host, "Applications", openButtonText="Run")
-            self.presenterOpen = OpenApplicationPresenter(self.applications, view, SimpleOpenInteractor())
+            self.applications = ListofObjectsModel(applications, ["name"])
+            self._showOpenScreen()
             self.presenterLogon.view.Hide()
-            self.presenterOpen.start()
         ApplicationPresenter.onConnect(self, perspective)
         #now we have the persective, we can ask the server what applications are available
         self.callRemote("getApplications").addCallback(_gotApplications)
         
-    def shutdown(self, app):
-        self.runningApplications.remove(app)
-        view = SimpleOpenView(self.applications, "Applications on "+self.model.host, "Applications", openButtonText="Run")
-        self.presenterOpen = OpenApplicationPresenter(self.applications, view, SimpleOpenInteractor())
+    def _showOpenScreen(self):
+        if not self.presenterOpen:
+            view = SimpleOpenView(self.applications, "Applications on "+self.model.host, "Applications", openButtonText="Run")
+            self.presenterOpen = OpenApplicationPresenter(self.applications, view, SimpleOpenInteractor())
         self.presenterOpen.start()
+        
+    def shutdownApplication(self, app):
+        self.runningApplications.remove(app)
+        if not self.runningApplications:
+            self._showOpenScreen()
 
 class LogonPresenter(Presenter, WindowPresenterMixin):
     def __init__(self, view, interactor):
@@ -72,8 +79,12 @@ class LogonPresenter(Presenter, WindowPresenterMixin):
     def connect(self):
         PyropeApplicationPresenter.getInstance().connect()
 
+    def onClose(self):
+        WindowPresenterMixin.onClose(self)
+
 class OpenApplicationPresenter(SimpleOpenPresenter):
     def onClose(self):
+        SimpleOpenPresenter.onClose(self)
         PyropeApplicationPresenter.getInstance().presenterLogon.view.Show()
         
     def onOpen(self):

@@ -47,11 +47,11 @@ class WindowReference(PyropeReferenceable):
             self.remote.callRemote("handleEvent", EventClose)
         else:
             self._destroy()
-#    def handleEvent(self, event):
+    def handleEvent(self, event):
 #        if event.GetEventType() == wx.EVT_TEXT.typeId:
 #            eventType = EventText
 #            data = self.widget.GetValue()
-#        self.app.app.server.callRemote("handleEvent", self.id, eventType, data)
+        self.remote.callRemote("handleEvent", eventType)
         
     def remote_Centre(self, direction, centreOnScreen): 
         dir = direction
@@ -205,7 +205,7 @@ class RemoteApplicationHandler(pb.Referenceable):
         self.widgets = {}
     def shutdown(self):
         def _shutdown(result):
-            self.appPresenter.shutdown(self.app)
+            self.appPresenter.shutdownApplication(self.app)
         return self.app.server.callRemote("shutdownApplication", self).addCallback(_shutdown)
     def remote_createWidget(self, remoteWidget, data):
         #create widget and local proxy
