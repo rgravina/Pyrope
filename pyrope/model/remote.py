@@ -212,4 +212,3 @@ class RemoteApplicationHandler(pb.Referenceable):
 
 class PyropeClientHandler(pb.Referenceable):
     pass
-
