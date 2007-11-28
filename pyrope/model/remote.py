@@ -122,11 +122,9 @@ class WidgetFactory(object):
         localRef = getattr(WidgetFactory, "create"+data["type"])(app, parent, remote, data)
         #store in widgets dict, because child widgets might need it
         app.widgets[remote] = localRef.widget
-#        if remote.children:
-#            for child in remote.children:
-#                childRef = WidgetFactory.create(app, child)
-#                app.app.server.callRemote("updateRemote", child.id, app, childRef)
-                
+        if remote.children:
+            for child, data in remote.children:
+                childRef = WidgetFactory.create(app, child, data)                
 #        if remote.sizer:
 #            try:
 #                widget.SetSizer(app.widgets[remote.sizer.id])

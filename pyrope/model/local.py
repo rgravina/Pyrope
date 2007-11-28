@@ -6,9 +6,6 @@ from twisted.python import log
 from twisted.internet.defer import inlineCallbacks
 from pyrope.model.shared import *
 from pyrope.errors import RemoteResourceNotCreatedException
-
-#eskimoapps imports
-#from eskimoapps.utils.pbutil import ObservedCacheable
 import random
 
 class IApplication(Interface):
@@ -76,7 +73,7 @@ class PyropeWidget(pb.Referenceable):
     @inlineCallbacks
     def createRemote(self):
         #creates remote widget, and gets a pb.RemoteReference to it's client-side proxy
-        self.remote = yield self.run.handler.callRemote("createWidget", self, self.getStateToCopy())
+        self.remote = yield self.run.handler.callRemote("createWidget", self, self.getConstructorData())
     def callRemote(self, functName, *args):
         if self.remote:
             return self.remote.callRemote(functName, *args)
@@ -103,7 +100,7 @@ class Window(PyropeWidget):
         self._backgroundColour = None
         self.sizer = None
         self.children = []
-    def getStateToCopy(self):
+    def getConstructorData(self):
         d = self.__dict__.copy()
         d["type"] = self.__class__.type
         if self.parent:
@@ -113,6 +110,9 @@ class Window(PyropeWidget):
         for event, fn in self.eventHandlers.items():
             d["eventHandlers"].append(event)
         del d["remote"]
+        d["children"] = []
+        for child in self.children:
+            d["children"].append(child, child.getConstructorData())
         return d
     def addChild(self, child):
         self.children.append(child)
