@@ -5,6 +5,7 @@ from twisted.spread import pb
 from twisted.python import log
 from twisted.internet.defer import inlineCallbacks
 from pyrope.model.shared import *
+from pyrope.model.remote import *
 from pyrope.errors import RemoteResourceNotCreatedException
 
 class IApplication(Interface):
@@ -71,7 +72,7 @@ class PyropeWidget(pb.Referenceable):
     @inlineCallbacks
     def createRemote(self):
         #creates remote widget, and gets a pb.RemoteReference to it's client-side proxy
-        self.remote = yield self.run.handler.callRemote("createWidget", self, self.getConstructorData())
+        self.remote = yield self.run.handler.callRemote("createWidget", WidgetConstructorDetails(self))
     def callRemote(self, functName, *args):
         if self.remote:
             return self.remote.callRemote(functName, *args)
@@ -91,7 +92,7 @@ class Window(PyropeWidget):
         self.parent = parent
         if parent != None:
             parent.children.append(self)
-        self.position = position
+        self.pos = position
         self.size = size
         self.style = style
         #other props
@@ -101,17 +102,30 @@ class Window(PyropeWidget):
         #can't send these
         del d["run"]
         del d["remote"]
-        #so the client knows what widget this is
-        d["type"] = self.__class__.type
-        #event handlers
-        d["eventHandlers"] = []
-        for event, fn in self.eventHandlers.items():
-            d["eventHandlers"].append(event)
-        #children widgets
-        d["children"] = []
-        for child in self.children:
-            d["children"].append((child, child.getConstructorData()))
+        del d["eventHandlers"]
+        del d["children"]
         return d
+    def getEventHandlers(self):
+        eventHandlers = []
+        for event, fn in self.eventHandlers.items():
+            eventHandlers.append(event)
+        return eventHandlers
+    def getChildren(self):
+        children = []
+        for child in self.children:
+            children.append((child, child.getConstructorData()))
+        return children
+#        #so the client knows what widget this is
+#        d["type"] = self.__class__.type
+#        #event handlers
+#        d["eventHandlers"] = []
+#        for event, fn in self.eventHandlers.items():
+#            d["eventHandlers"].append(event)
+#        #children widgets
+#        d["children"] = []
+#        for child in self.children:
+#            d["children"].append((child, child.getConstructorData()))
+#        return d
     def ClientToScreen(self, point):
         return self.callRemote("ClientToScreen", point)
     def Hide(self):

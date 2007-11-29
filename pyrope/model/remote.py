@@ -14,6 +14,17 @@ class RemoteApplication(pb.Copyable, pb.RemoteCopy):
         self.server = app
 pb.setUnjellyableForClass(RemoteApplication, RemoteApplication)
 
+class WidgetConstructorDetails(pb.Copyable, pb.RemoteCopy):
+    """Describes a information needed by the client to create a local wxWidget which represents a server-side Pyrope widget. 
+    It is a U{Parameter Object<http://www.refactoring.com/catalog/introduceParameterObject.html>}"""
+    def __init__(self, pyropeWidget):
+        self.remoteWidgetReference = pyropeWidget
+        self.type = pyropeWidget.__class__.type
+        self.constructorData = pyropeWidget.getConstructorData()
+        self.children = pyropeWidget.getChildren()
+        self.eventHandlers = pyropeWidget.getEventHandlers()
+pb.setUnjellyableForClass(WidgetConstructorDetails, WidgetConstructorDetails)
+
 class PyropeReferenceable(pb.Referenceable):
     """Subclasses pb.Referenceable so that it calls self.widget.somemethod when remote_somemethod connot be found.
     This makes it simpler to wrap methods on wxWidgets classes."""
@@ -113,19 +124,16 @@ class LabelReference(WindowReference):
 class WidgetFactory(object):
     """A Factory that produces wxWidgets based on the class of the remote Pyrope widget passed to the constructor."""
     @classmethod
-    def create(cls, app, remote, data):
-        print data
+    def create(cls, app, widgetData):
         #if the remote widget has a parent (supplied as a pb.RemoteReference) get the coressponding wxWindow which is it's parent
-        if data["parent"]:
-            parent = app.widgets[data["parent"]]
-        else: 
-            parent = None
-        localRef = getattr(WidgetFactory, "create"+data["type"])(app, parent, remote, data)
+        if widgetData.constructorData["parent"]:
+            widgetData.constructorData["parent"] = app.widgets[widgetData.constructorData["parent"]]
+        localRef = getattr(WidgetFactory, "create"+widgetData.type)(app, widgetData)
         #store in widgets dict, because child widgets might need it
-        app.widgets[remote] = localRef.widget
-        if data["children"]:
-            for child, childData in data["children"]:
-                childRef = WidgetFactory.create(app, child, childData)                
+        app.widgets[widgetData.remoteWidgetReference] = localRef.widget
+#        if data["children"]:
+#            for child, childData in data["children"]:
+#                childRef = WidgetFactory.create(app, child, childData)                
 #        if remote.sizer:
 #            try:
 #                widget.SetSizer(app.widgets[remote.sizer.id])
@@ -139,10 +147,10 @@ class WidgetFactory(object):
 #        localRef = WindowReference(app, window, remote.id, remote.eventHandlers)
 #        return localRef
     @classmethod
-    def createFrame(cls, app, parent, remote, data):
-        kwargs = {"parent":parent, "id":wx.ID_ANY, "title":data["title"],"size":data["size"], "pos":data["position"],"style":data["style"]}
-        frame = wx.Frame(**kwargs)
-        localRef = FrameReference(app, frame, remote, data["eventHandlers"])
+    def createFrame(cls, app, widgetData):
+#        kwargs = {"parent":parent, "id":wx.ID_ANY, "title":data["title"],"size":data["size"], "pos":data["position"],"style":data["style"]}
+        frame = wx.Frame(**widgetData.constructorData)
+        localRef = FrameReference(app, frame, widgetData.remoteWidgetReference, widgetData.eventHandlers)
         frame.Bind(wx.EVT_CLOSE, localRef.onClose)
         app.topLevelWindows.append(frame)
         return localRef
@@ -207,10 +215,10 @@ class RemoteApplicationHandler(pb.Referenceable):
         def _shutdown(result):
             self.appPresenter.shutdownApplication(self.app)
         return self.app.server.callRemote("shutdownApplication", self).addCallback(_shutdown)
-    def remote_createWidget(self, remoteWidget, data):
+    def remote_createWidget(self, widgetData):
         #create widget and local proxy
         #return pb.RemoteReference to server
-        return  WidgetFactory.create(self, remoteWidget, data)
+        return WidgetFactory.create(self, widgetData)
 
 class PyropeClientHandler(pb.Referenceable):
     pass
