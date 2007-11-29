@@ -114,7 +114,8 @@ class WidgetFactory(object):
     """A Factory that produces wxWidgets based on the class of the remote Pyrope widget passed to the constructor."""
     @classmethod
     def create(cls, app, remote, data):
-        #if the remote widget has a parent (supplied as an ID) get the coressponding wxWindow which is it's parent
+        print data
+        #if the remote widget has a parent (supplied as a pb.RemoteReference) get the coressponding wxWindow which is it's parent
         if data["parent"]:
             parent = app.widgets[data["parent"]]
         else: 
@@ -139,7 +140,8 @@ class WidgetFactory(object):
 #        return localRef
     @classmethod
     def createFrame(cls, app, parent, remote, data):
-        frame = wx.Frame(parent, wx.ID_ANY, data["title"], size=data["size"], pos=data["position"], style=data["style"])
+        kwargs = {"parent":parent, "id":wx.ID_ANY, "title":data["title"],"size":data["size"], "pos":data["position"],"style":data["style"]}
+        frame = wx.Frame(**kwargs)
         localRef = FrameReference(app, frame, remote, data["eventHandlers"])
         frame.Bind(wx.EVT_CLOSE, localRef.onClose)
         app.topLevelWindows.append(frame)

@@ -6,7 +6,6 @@ from twisted.python import log
 from twisted.internet.defer import inlineCallbacks
 from pyrope.model.shared import *
 from pyrope.errors import RemoteResourceNotCreatedException
-import random
 
 class IApplication(Interface):
     """A Pyrope application"""
@@ -19,7 +18,7 @@ class RunningApplication(object):
     def __init__(self, perspective, handler):
         self.perspective = perspective     #users perpective 
         self.handler = handler             #client-side application handler
-        self.widgets = {}                  #map id -> widget for this instance
+        self.widgets = []                  #widgets in this instance
     
 class Application(pb.Viewable):
     """Base class for user applications. Users should subclass this and override at least L{start}."""
@@ -55,17 +54,16 @@ class Application(pb.Viewable):
 #        if event == EventText:
 #            widget._value = data
 #        widget.eventHandlers[event](widget)
-    def view_updateRemote(self, perspective, id, handler, remote):
-        run = self.runningApplications[handler]
-        widget = run.widgets[id]
-        widget.remote = remote
+#    def view_updateRemote(self, perspective, id, handler, remote):
+#        run = self.runningApplications[handler]
+#        widget = run.widgets[id]
+#        widget.remote = remote
         
 class PyropeWidget(pb.Referenceable):
     type = "PyropeWidget"
     def __init__(self, run):
-        self.id = random.random()
         self.run = run
-        run.widgets[self.id] = self
+        run.widgets.append(self)
         #the remote reference will be set when the client supplies it
         self.remote = None
         #for event handling
@@ -92,28 +90,28 @@ class Window(PyropeWidget):
         PyropeWidget.__init__(self, run)
         self.parent = parent
         if parent != None:
-            parent.addChild(self)
+            parent.children.append(self)
         self.position = position
         self.size = size
         self.style = style
         #other props
-        self._backgroundColour = None
-        self.sizer = None
         self.children = []
     def getConstructorData(self):
         d = self.__dict__.copy()
-        d["type"] = self.__class__.type
+        #can't send these
         del d["run"]
+        del d["remote"]
+        #so the client knows what widget this is
+        d["type"] = self.__class__.type
+        #event handlers
         d["eventHandlers"] = []
         for event, fn in self.eventHandlers.items():
             d["eventHandlers"].append(event)
-        del d["remote"]
+        #children widgets
         d["children"] = []
         for child in self.children:
             d["children"].append((child, child.getConstructorData()))
         return d
-    def addChild(self, child):
-        self.children.append(child)
     def ClientToScreen(self, point):
         return self.callRemote("ClientToScreen", point)
     def Hide(self):
@@ -129,16 +127,16 @@ class Window(PyropeWidget):
     def Enable(self):
         return self.callRemote("Enable")
 
-    def GetBackgroundColour(self):
-        #simply return the background colour
-        return self._backgroundColour
-    def SetBackgroundColour(self, colour):
-        #set the local background colour
-        self._backgroundColour = colour
-        #set remote
-        return self.callRemote("SetBackgroundColour", colour)
-    #XXX: this doesn't work for setter!
-    backgroundColour = property(GetBackgroundColour, SetBackgroundColour)
+#    def GetBackgroundColour(self):
+#        #simply return the background colour
+#        return self._backgroundColour
+#    def SetBackgroundColour(self, colour):
+#        #set the local background colour
+#        self._backgroundColour = colour
+#        #set remote
+#        return self.callRemote("SetBackgroundColour", colour)
+#    #XXX: this doesn't work for setter!
+#    backgroundColour = property(GetBackgroundColour, SetBackgroundColour)
 
 #class BoxSizer(PyropeWidget):
 #    def __init__(self, app, handler, orientation):

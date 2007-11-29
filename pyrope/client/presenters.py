@@ -25,7 +25,6 @@ class PyropeApplicationPresenter(ApplicationPresenter):
         self.localHandler = PyropeClientHandler()
 
         self.applications = None
-        self.presenterOpen = None
         self.presenterLogon = None
 
     def initView(self):
@@ -46,10 +45,9 @@ class PyropeApplicationPresenter(ApplicationPresenter):
         self.callRemote("getApplications").addCallback(_gotApplications)
         
     def _showOpenScreen(self):
-        if not self.presenterOpen:
-            view = SimpleOpenView(self.applications, "Applications on "+self.model.host, "Applications", openButtonText="Run")
-            self.presenterOpen = OpenApplicationPresenter(self.applications, view, SimpleOpenInteractor())
-        self.presenterOpen.start()
+        view = SimpleOpenView(self.applications, "Applications on "+self.model.host, "Applications", openButtonText="Run")
+        presenterOpen = OpenApplicationPresenter(self.applications, view, SimpleOpenInteractor())
+        presenterOpen.start()
         
     def shutdownApplication(self, app):
         self.runningApplications.remove(app)
@@ -92,6 +90,7 @@ class OpenApplicationPresenter(SimpleOpenPresenter):
         def _openedApplication(result, application):
             #application started. add to list of running applications
             PyropeApplicationPresenter.getInstance().runningApplications.append(application)
+            SimpleOpenPresenter.onClose(self)
         #OK now we need to tell the server to start the application and wait for something to happen
         application = self.model.getObjectAt(self.view.lstObjects.getSelectedIndex())
         application.handler = RemoteApplicationHandler(application, PyropeApplicationPresenter.getInstance())
