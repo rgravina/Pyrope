@@ -105,6 +105,8 @@ class Window(PyropeWidget):
         del d["eventHandlers"]
         del d["children"]
         return d
+    def getOtherData(self):
+        pass
     def getEventHandlers(self):
         eventHandlers = []
         for event, fn in self.eventHandlers.items():
@@ -113,7 +115,7 @@ class Window(PyropeWidget):
     def getChildren(self):
         children = []
         for child in self.children:
-            children.append((child, child.getConstructorData()))
+            children.append(WidgetConstructorDetails(child))
         return children
 #        #so the client knows what widget this is
 #        d["type"] = self.__class__.type
@@ -176,7 +178,7 @@ class Label(Window):
     type = "Label"
     def __init__(self, run, parent, value=u"", position=DefaultPosition, size=DefaultSize, style=0):
         Window.__init__(self, run, parent, position=position, size=size, style=style)
-        self.value = value
+        self.label = value
 
 ######################
 # Frames and Dialogs #
@@ -194,6 +196,12 @@ class SizedFrame(Window):
         Window.__init__(self, run, parent, position=position, size=size, style=style)
         self.title = title
         self.sizerType = sizerType
+    def getConstructorData(self):
+        d = Window.getConstructorData(self)
+        del d["sizerType"]
+        return d
+    def getOtherData(self):
+        return {"sizerType":self.sizerType}
 
 #class Dialog(Window):
 #    def __init__(self, app, handler, parent, title=u"", position=DefaultPosition, size=DefaultSize, style=wx.DEFAULT_DIALOG_STYLE):
@@ -225,7 +233,7 @@ class Button(Window):
     CLICK = range(1) #python enum hack
     def __init__(self, run, parent, value=u""):
         Window.__init__(self, run, parent)
-        self.value = value
+        self.label = value
    
 #class BoxSizer(pb.Copyable, pb.RemoteCopy):
 #    def __init__(self, perspective):

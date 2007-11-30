@@ -21,6 +21,7 @@ class WidgetConstructorDetails(pb.Copyable, pb.RemoteCopy):
         self.remoteWidgetReference = pyropeWidget
         self.type = pyropeWidget.__class__.type
         self.constructorData = pyropeWidget.getConstructorData()
+        self.otherData = pyropeWidget.getOtherData()
         self.children = pyropeWidget.getChildren()
         self.eventHandlers = pyropeWidget.getEventHandlers()
 pb.setUnjellyableForClass(WidgetConstructorDetails, WidgetConstructorDetails)
@@ -131,9 +132,9 @@ class WidgetFactory(object):
         localRef = getattr(WidgetFactory, "create"+widgetData.type)(app, widgetData)
         #store in widgets dict, because child widgets might need it
         app.widgets[widgetData.remoteWidgetReference] = localRef.widget
-#        if data["children"]:
-#            for child, childData in data["children"]:
-#                childRef = WidgetFactory.create(app, child, childData)                
+        if widgetData.children:
+            for childData in widgetData.children:
+                childRef = WidgetFactory.create(app, childData)                
 #        if remote.sizer:
 #            try:
 #                widget.SetSizer(app.widgets[remote.sizer.id])
@@ -155,19 +156,20 @@ class WidgetFactory(object):
         app.topLevelWindows.append(frame)
         return localRef
     @classmethod
-    def createSizedFrame(cls, app, parent, remote, data):
-        frame = sc.SizedFrame(parent, wx.ID_ANY, data["title"], size=data["size"], pos=data["position"], style=data["style"])
+    def createSizedFrame(cls, app, widgetData):
+#        frame = sc.SizedFrame(parent, wx.ID_ANY, data["title"], size=data["size"], pos=data["position"], style=data["style"])
+        frame = sc.SizedFrame(**widgetData.constructorData)
         panel = frame.GetContentsPane()
-        panel.SetSizerType(data["sizerType"])
-        localRef = SizedFrameReference(app, frame, remote, data["eventHandlers"])
+        panel.SetSizerType(widgetData.otherData["sizerType"])
+        localRef = SizedFrameReference(app, frame, widgetData.remoteWidgetReference, widgetData.eventHandlers)
         frame.Bind(wx.EVT_CLOSE, localRef.onClose)
         app.topLevelWindows.append(frame)
         return localRef
     @classmethod
-    def createSizedPanel(cls, app, parent, remote, data):
-        parentPanel = parent.GetContentsPane()
-        panel = sc.SizedPanel(parentPanel, wx.ID_ANY, size=data["size"], pos=data["position"], style=data["style"])
-        localRef = SizedPanelReference(app, panel, remote, data["eventHandlers"])
+    def createSizedPanel(cls, app, widgetData):
+        widgetData.constructorData["parent"] = widgetData.constructorData["parent"].GetContentsPane()
+        panel = sc.SizedPanel(**widgetData.constructorData)
+        localRef = SizedPanelReference(app, panel, widgetData.remoteWidgetReference, widgetData.eventHandlers)
         return localRef
 #    @classmethod
 #    def createDialog(cls, app, parent, remote):
@@ -184,24 +186,27 @@ class WidgetFactory(object):
 #        app.topLevelWindows.append(dialog)
 #        return localRef
     @classmethod
-    def createTextBox(cls, app, parent, remote, data):
-        panel = parent.GetContentsPane()
-        widget = wx.TextCtrl(panel, wx.ID_ANY, value=data["value"], size=data["size"], pos=data["position"], style=data["style"])
-        localRef = TextBoxReference(app, widget, remote, data["eventHandlers"])
-        for event in data["eventHandlers"]:
+    def createTextBox(cls, app, widgetData):
+        widgetData.constructorData["parent"] = widgetData.constructorData["parent"].GetContentsPane()
+#        widget = wx.TextCtrl(panel, wx.ID_ANY, value=data["value"], size=data["size"], pos=data["position"], style=data["style"])
+        widget = wx.TextCtrl(**widgetData.constructorData)
+        localRef = TextBoxReference(app, widget, widgetData.remoteWidgetReference, widgetData.eventHandlers)
+        for event in  widgetData.eventHandlers:
             widget.Bind(events[event], localRef.handleEvent)
         return localRef
     @classmethod
-    def createLabel(cls, app, parent, remote, data):
-        panel = parent.GetContentsPane()
-        widget = wx.StaticText(panel, wx.ID_ANY, label=data["value"], size=data["size"], pos=data["position"], style=data["style"])
-        localRef = LabelReference(app, widget, remote, data["eventHandlers"])
+    def createLabel(cls, app, widgetData):
+        widgetData.constructorData["parent"] = widgetData.constructorData["parent"].GetContentsPane()
+ #       widget = wx.StaticText(panel, wx.ID_ANY, label=data["value"], size=data["size"], pos=data["position"], style=data["style"])
+        widget = wx.StaticText(**widgetData.constructorData)
+        localRef = LabelReference(app, widget, widgetData.remoteWidgetReference, widgetData.eventHandlers)
         return localRef
     @classmethod
-    def createButton(cls, app, parent, remote, data):
-        panel = parent.GetContentsPane()
-        widget = wx.Button(panel, wx.ID_ANY, label=data["value"], size=data["size"], pos=data["position"], style=data["style"])
-        localRef = ButtonReference(app, widget, remote, data["eventHandlers"])
+    def createButton(cls, app, widgetData):
+        widgetData.constructorData["parent"] = widgetData.constructorData["parent"].GetContentsPane()
+#        widget = wx.Button(panel, wx.ID_ANY, label=data["value"], size=data["size"], pos=data["position"], style=data["style"])
+        widget = wx.Button(**widgetData.constructorData)
+        localRef = ButtonReference(app, widget, widgetData.remoteWidgetReference, widgetData.eventHandlers)
         return localRef
 
 class RemoteApplicationHandler(pb.Referenceable):
