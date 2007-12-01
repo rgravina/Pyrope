@@ -15,7 +15,7 @@ from twisted.spread import pb
 from twisted.application import internet
 from twisted.application import service
 from twisted.python import log
-from zope.interface import Interface, Attribute, implements
+from zope.interface import implements
 #Pyrope imports
 from pyrope.errors import *
 from pyrope.model import *
