@@ -125,9 +125,14 @@ class LabelReference(WindowReference):
 
 class WidgetBuilder(object):
     def replaceParent(self, app, widgetData):
-        if widgetData.constructorData["parent"]:
-            widgetData.constructorData["parent"] = app.widgets[widgetData.constructorData["parent"]]
-        
+        parent = widgetData.constructorData["parent"]
+        if parent:
+            widget =  app.widgets[parent] 
+            if isinstance(widget, sc.SizedFrame):
+                widgetData.constructorData["parent"] = widget.GetContentsPane()
+            else:
+                widgetData.constructorData["parent"] = widget
+                 
     def createLocalReference(self, app, widgetData):
         #XXX: this will break if called from a WidgetBuilder instance!
         window = self.widgetClass(**widgetData.constructorData)
@@ -159,34 +164,18 @@ class SizedFrameBuilder(FrameBuilder):
 class SizedPanelBuilder(FrameBuilder):
     widgetClass = sc.SizedPanel
     referenceClass = SizedPanelReference
-    def replaceParent(self, app, widgetData):
-        WidgetBuilder.replaceParent(self, app, widgetData)
-        #XXX: assumes parent is a SizedFrame
-        widgetData.constructorData["parent"] = widgetData.constructorData["parent"].GetContentsPane()
 
 class TextBoxBuilder(WidgetBuilder):
     widgetClass = wx.TextCtrl
     referenceClass = TextBoxReference
-    def replaceParent(self, app, widgetData):
-        WidgetBuilder.replaceParent(self, app, widgetData)
-        #XXX: assumes parent is a SizedFrame
-        widgetData.constructorData["parent"] = widgetData.constructorData["parent"].GetContentsPane()
 
 class LabelBuilder(WidgetBuilder):
     widgetClass = wx.StaticText
     referenceClass = LabelReference
-    def replaceParent(self, app, widgetData):
-        WidgetBuilder.replaceParent(self, app, widgetData)
-        #XXX: assumes parent is a SizedFrame
-        widgetData.constructorData["parent"] = widgetData.constructorData["parent"].GetContentsPane()
 
 class ButtonBuilder(WidgetBuilder):
     widgetClass = wx.Button
     referenceClass = ButtonReference
-    def replaceParent(self, app, widgetData):
-        WidgetBuilder.replaceParent(self, app, widgetData)
-        #XXX: assumes parent is a SizedFrame
-        widgetData.constructorData["parent"] = widgetData.constructorData["parent"].GetContentsPane()
 
 class WidgetFactory(object):
     """A Factory that produces wxWidgets based on the class of the remote Pyrope widget passed to the constructor."""
