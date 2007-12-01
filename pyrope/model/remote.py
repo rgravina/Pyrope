@@ -79,13 +79,6 @@ class WindowReference(PyropeReferenceable):
     def remote_SetBackgroundColour(self, colour):
         return self.widget.SetBackgroundColour(colour)
 
-#class LocalSizerReference(PyropeReferenceable):
-#    """Manages a local wxSizer"""
-#    def __init__(self, app, widget, id):
-#        self.app = app
-#        self.widget = widget
-#        self.id = id
-
 class FrameReference(WindowReference):
     pass
 
@@ -107,21 +100,6 @@ class ButtonReference(WindowReference):
 class LabelReference(WindowReference):
     def remote_SetLabel(self, label):
         return self.widget.SetLabel(label)
-
-#class SizerFactory(object):
-#    @classmethod
-#    def create(cls, app, remote):
-#        localRef = getattr(SizerFactory, "create"+remote.__class__.__name__)(app, remote)
-#        return localRef
-#    @classmethod
-#    def createBoxSizer(cls, app, remote):
-#        sizer = wx.BoxSizer(remote.orientation)
-#        localRef = LocalSizerReference(app, sizer, remote.id)
-#        for widget in remote.widgets:
-#            subref = WidgetFactory.create(app, widget)
-#            app.app.server.callRemote("updateRemote", widget.id, subref)
-#            sizer.Add(subref.widget)
-#        return localRef
 
 class WidgetBuilder(object):
     def replaceParent(self, app, widgetData):
@@ -182,83 +160,10 @@ class WidgetFactory(object):
     @classmethod
     def create(cls, app, widgetData):
         builder = eval(widgetData.type+"Builder")()
-        #if the remote widget has a parent (supplied as a pb.RemoteReference) get the coressponding wxWindow which is it's parent
+        #if the remote widget has a parent (supplied as a pb.RemoteReference) replace the attribute with the coressponding wxWindow which is it's real parent
         builder.replaceParent(app, widgetData)
+        #create and return the local pb.Referenceable that will manage this widget
         return builder.createLocalReference(app, widgetData)
-#        localRef = getattr(WidgetFactory, "create"+widgetData.type)(app, widgetData)
-#        #store in widgets dict, because child widgets might need it
-#        app.widgets[widgetData.remoteWidgetReference] = localRef.widget
-#        if widgetData.children:
-#            for childData in widgetData.children:
-#                childRef = WidgetFactory.create(app, childData)                
-#        if remote.sizer:
-#            try:
-#                widget.SetSizer(app.widgets[remote.sizer.id])
-#            except KeyError:
-#                sizer, lr = SizerFactory.createBoxSizer(app, remote.sizer)
-#                widget.SetSizer(sizer)
-#        return localRef
-#    @classmethod
-#    def createWindow(cls, app, widgetData):
-#        window = wx.Window(**widgetData.constructorData)
-#        localRef = WindowReference(app, window, widgetData.remoteWidgetReference, widgetData.eventHandlers)
-#        return localRef
-#    @classmethod
-#    def createFrame(cls, app, widgetData):
-##        frame = wx.Frame(**widgetData.constructorData)
-##        localRef = FrameReference(app, frame, widgetData.remoteWidgetReference, widgetData.eventHandlers)
-#        frame.Bind(wx.EVT_CLOSE, localRef.onClose)
-#        app.topLevelWindows.append(frame)
-#        return localRef
-#    @classmethod
-#    def createSizedFrame(cls, app, widgetData):
-#        frame = sc.SizedFrame(**widgetData.constructorData)
-#        panel = frame.GetContentsPane()
-#        panel.SetSizerType(widgetData.otherData["sizerType"])
-#        localRef = SizedFrameReference(app, frame, widgetData.remoteWidgetReference, widgetData.eventHandlers)
-#        frame.Bind(wx.EVT_CLOSE, localRef.onClose)
-#        app.topLevelWindows.append(frame)
-#        return localRef
-#    @classmethod
-#    def createSizedPanel(cls, app, widgetData):
-#        widgetData.constructorData["parent"] = widgetData.constructorData["parent"].GetContentsPane()
-#        panel = sc.SizedPanel(**widgetData.constructorData)
-#        localRef = SizedPanelReference(app, panel, widgetData.remoteWidgetReference, widgetData.eventHandlers)
-#        return localRef
-#    @classmethod
-#    def createDialog(cls, app, widgetData):
-#        dialog = wx.Dialog(**widgetData.constructorData)
-#        localRef = DialogReference(app, dialog, widgetData.remoteWidgetReference, widgetData.eventHandlers)
-#        dialog.Bind(wx.EVT_CLOSE, localRef.onClose)
-#        self.topLevelWindows.append(dialog)
-#        return localRef
-#    @classmethod
-#    def createMessageDialog(cls, app, widgetData):
-#        dialog = wx.MessageDialog(**widgetData.constructorData)
-#        localRef = DialogReference(app, dialog, widgetData.remoteWidgetReference, widgetData.eventHandlers)
-#        dialog.Bind(wx.EVT_CLOSE, localRef.onClose)
-#        app.topLevelWindows.append(dialog)
-#        return localRef
-#    @classmethod
-#    def createTextBox(cls, app, widgetData):
-#        widgetData.constructorData["parent"] = widgetData.constructorData["parent"].GetContentsPane()
-#        widget = wx.TextCtrl(**widgetData.constructorData)
-#        localRef = TextBoxReference(app, widget, widgetData.remoteWidgetReference, widgetData.eventHandlers)
-#        for event in  widgetData.eventHandlers:
-#            widget.Bind(events[event], localRef.handleEvent)
-#        return localRef
-#    @classmethod
-#    def createLabel(cls, app, widgetData):
-#        widgetData.constructorData["parent"] = widgetData.constructorData["parent"].GetContentsPane()
-#        widget = wx.StaticText(**widgetData.constructorData)
-#        localRef = LabelReference(app, widget, widgetData.remoteWidgetReference, widgetData.eventHandlers)
-#        return localRef
-#    @classmethod
-#    def createButton(cls, app, widgetData):
-#        widgetData.constructorData["parent"] = widgetData.constructorData["parent"].GetContentsPane()
-#        widget = wx.Button(**widgetData.constructorData)
-#        localRef = ButtonReference(app, widget, widgetData.remoteWidgetReference, widgetData.eventHandlers)
-#        return localRef
 
 class RemoteApplicationHandler(pb.Referenceable):
     def __init__(self, app, appPresenter):
