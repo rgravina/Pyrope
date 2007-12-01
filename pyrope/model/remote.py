@@ -195,8 +195,7 @@ class WidgetFactory(object):
         builder = eval(widgetData.type+"Builder")()
         #if the remote widget has a parent (supplied as a pb.RemoteReference) get the coressponding wxWindow which is it's parent
         builder.replaceParent(app, widgetData)
-        localRef = builder.createLocalReference(app, widgetData)
-        return localRef
+        return builder.createLocalReference(app, widgetData)
 #        localRef = getattr(WidgetFactory, "create"+widgetData.type)(app, widgetData)
 #        #store in widgets dict, because child widgets might need it
 #        app.widgets[widgetData.remoteWidgetReference] = localRef.widget
