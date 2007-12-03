@@ -81,9 +81,14 @@ class PyropeWidget(pb.Referenceable):
     def bind(self, event, handlerFunction):
         self.eventHandlers[event] = handlerFunction
     def remote_handleEvent(self, event):
-        """API Stability: unstable
-        Called by client when an event has been fired. """
-        self.eventHandlers[event](widget)
+        """Called by client when an event has been fired. """
+        #update local cached data
+        event.widget.handleEvent(event)
+        #call event handler
+        #TODO: support multiple handlers
+        self.eventHandlers[event.eventType](event)
+    def remote_updateRemote(self, remote):
+        self.remote = remote
 
 class Window(PyropeWidget):
     type = "Window"
@@ -98,12 +103,11 @@ class Window(PyropeWidget):
         #other props
         self.children = []
     def getConstructorData(self):
-        d = self.__dict__.copy()
-        #can't send these
-        del d["run"]
-        del d["remote"]
-        del d["eventHandlers"]
-        del d["children"]
+        d = {}
+        d["parent"] = self.parent
+        d["pos"] = self.pos
+        d["size"] = self.size
+        d["style"] = self.style
         return d
     def getOtherData(self):
         pass
@@ -173,12 +177,27 @@ class TextBox(Window):
     def __init__(self, run, parent, value=u"", position=DefaultPosition, size=DefaultSize, style=0):
         Window.__init__(self, run, parent, position=position, size=size, style=style)
         self.value = value
-
+    def getConstructorData(self):
+        d = Window.getConstructorData(self)
+        d["value"] = self.value
+        return d
+    def handleEvent(self, event):
+        #TODO: check the event type, handle accordingly, throw exceptions if it can't handle it
+        self.value = event.data
 class Label(Window):
     type = "Label"
     def __init__(self, run, parent, value=u"", position=DefaultPosition, size=DefaultSize, style=0):
         Window.__init__(self, run, parent, position=position, size=size, style=style)
         self.label = value
+    def getConstructorData(self):
+        d = Window.getConstructorData(self)
+        d["label"] = self.label
+        return d
+    def SetValue(self, label):
+        #set the local background colour
+        self.label = label
+        #set remote
+        return self.callRemote("SetLabel", label)
 
 ######################
 # Frames and Dialogs #
@@ -189,6 +208,10 @@ class Frame(Window):
     def __init__(self, run, parent, title=u"", position=DefaultPosition, size=DefaultSize, style=wx.DEFAULT_FRAME_STYLE):
         Window.__init__(self, run, parent, position=position, size=size, style=style)
         self.title = title
+    def getConstructorData(self):
+        d = Window.getConstructorData(self)
+        d["title"] = self.title
+        return d
 
 class SizedFrame(Window):
     type = "SizedFrame"
@@ -196,10 +219,6 @@ class SizedFrame(Window):
         Window.__init__(self, run, parent, position=position, size=size, style=style)
         self.title = title
         self.sizerType = sizerType
-    def getConstructorData(self):
-        d = Window.getConstructorData(self)
-        del d["sizerType"]
-        return d
     def getOtherData(self):
         return {"sizerType":self.sizerType}
 
@@ -234,6 +253,10 @@ class Button(Window):
     def __init__(self, run, parent, value=u""):
         Window.__init__(self, run, parent)
         self.label = value
+    def getConstructorData(self):
+        d = Window.getConstructorData(self)
+        d["label"] = self.label
+        return d
    
 #class BoxSizer(pb.Copyable, pb.RemoteCopy):
 #    def __init__(self, perspective):
@@ -266,4 +289,3 @@ class Button(Window):
 #    def addPage(self, panel, title):
 #        self.perspective.addPage(self.id, panel.id, title)
 #pb.setUnjellyableForClass(Notebook, Notebook)
-

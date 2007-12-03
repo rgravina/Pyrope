@@ -27,6 +27,13 @@ class WidgetConstructorDetails(pb.Copyable, pb.RemoteCopy):
         self.eventHandlers = pyropeWidget.getEventHandlers()
 pb.setUnjellyableForClass(WidgetConstructorDetails, WidgetConstructorDetails)
 
+class Event(pb.Copyable, pb.RemoteCopy):
+    def __init__(self, widget, eventType, data):
+        self.widget = widget
+        self.eventType = eventType
+        self.data = data
+pb.setUnjellyableForClass(Event, Event)
+
 class PyropeReferenceable(pb.Referenceable):
     """Subclasses pb.Referenceable so that it calls self.widget.somemethod when remote_somemethod connot be found.
     This makes it simpler to wrap methods on wxWidgets classes."""
@@ -46,6 +53,7 @@ class WindowReference(PyropeReferenceable):
         self.boundEvents = []    #bound Pyrope events, e.g. EventClose
         for event in handlers:
             self.boundEvents.append(event)
+            self.widget.Bind(events[event], self.handleEvent)            
     def remote_Destroy(self):
         self._destroy()
     def _destroy(self):
@@ -57,14 +65,14 @@ class WindowReference(PyropeReferenceable):
         self.widget.Destroy()
     def onClose(self, event):
         if EventClose in self.boundEvents:
-            self.remote.callRemote("handleEvent", EventClose)
+#            self.remote.callRemote("handleEvent", EventClose)
+            pass
         else:
             self._destroy()
     def handleEvent(self, event):
-#        if event.GetEventType() == wx.EVT_TEXT.typeId:
-#            eventType = EventText
-#            data = self.widget.GetValue()
-        self.remote.callRemote("handleEvent", eventType)
+        if event.GetEventType() == wx.EVT_TEXT.typeId:
+            eventData = Event(self.remote, EventText, self.widget.GetValue())
+        self.remote.callRemote("handleEvent", eventData)
         
     def remote_Centre(self, direction, centreOnScreen): 
         dir = direction
@@ -127,7 +135,9 @@ class FrameBuilder(WidgetBuilder):
         app.topLevelWindows.append(localRef.widget)
         if widgetData.children:
             for childData in widgetData.children:
-                childRef = WidgetFactory.create(app, childData)                
+                childRef = WidgetFactory.create(app, childData)
+                #server needs to know about child reference
+                childData.remoteWidgetReference.callRemote("updateRemote", childRef)
         return localRef
 
 class SizedFrameBuilder(FrameBuilder):
