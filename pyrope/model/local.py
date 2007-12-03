@@ -48,17 +48,6 @@ class Application(pb.Viewable):
     def shutdown(self, run):
         """Subclasses should put any shutdown code here"""
         pass
-#    def view_handleEvent(self, perspective, id, event, data=None):
-#        """API Stability: unstable
-#        Called by client when an event has been fired. """
-#        widget = self.widgets[id]
-#        if event == EventText:
-#            widget._value = data
-#        widget.eventHandlers[event](widget)
-#    def view_updateRemote(self, perspective, id, handler, remote):
-#        run = self.runningApplications[handler]
-#        widget = run.widgets[id]
-#        widget.remote = remote
         
 class PyropeWidget(pb.Referenceable):
     type = "PyropeWidget"
@@ -121,17 +110,9 @@ class Window(PyropeWidget):
         for child in self.children:
             children.append(WidgetConstructorDetails(child))
         return children
-#        #so the client knows what widget this is
-#        d["type"] = self.__class__.type
-#        #event handlers
-#        d["eventHandlers"] = []
-#        for event, fn in self.eventHandlers.items():
-#            d["eventHandlers"].append(event)
-#        #children widgets
-#        d["children"] = []
-#        for child in self.children:
-#            d["children"].append((child, child.getConstructorData()))
-#        return d
+    def handleEvent(self, event):
+        """Default response to an event is to ignore it. Implement useful behaviour in subsclasses (e.g. for TextBox, on a EventText, update the textboxes value attribute)"""
+        pass
     def ClientToScreen(self, point):
         return self.callRemote("ClientToScreen", point)
     def Hide(self):
@@ -198,6 +179,8 @@ class Label(Window):
         self.label = label
         #set remote
         return self.callRemote("SetLabel", label)
+    def handleEvent(self, event):
+        self.label = event.data
 
 ######################
 # Frames and Dialogs #
@@ -249,7 +232,6 @@ class SizedPanel(Window):
 ###########
 class Button(Window):
     type = "Button"
-    CLICK = range(1) #python enum hack
     def __init__(self, run, parent, value=u""):
         Window.__init__(self, run, parent)
         self.label = value
@@ -257,35 +239,3 @@ class Button(Window):
         d = Window.getConstructorData(self)
         d["label"] = self.label
         return d
-   
-#class BoxSizer(pb.Copyable, pb.RemoteCopy):
-#    def __init__(self, perspective):
-#        self.id = random.random()
-#        self.perspective = perspective    
-#        perspective.createBoxSizer(self)
-#pb.setUnjellyableForClass(BoxSizer, BoxSizer)
-#
-#class Panel(Window):
-#    def __init__(self, perspective, parent):
-#        Window.__init__(self, perspective, parent)
-#        perspective.createPanel(self)
-#pb.setUnjellyableForClass(Panel, Panel)
-
-#class Button(Window):
-#    CLICK = range(1) #python enum hack
-#    def __init__(self, perspective, parent, label=u""):
-#        Window.__init__(self, perspective, parent)
-#        self.label = label
-#        self.handler = None
-#        perspective.createButton(self)
-#    def bind(self, event, handlerFunction):
-#        self.handler = handlerFunction
-#pb.setUnjellyableForClass(Button, Button)
-#
-#class Notebook(Window):
-#    def __init__(self, perspective, parent):
-#        Window.__init__(self, perspective, parent)
-#        perspective.createNotebook(self)
-#    def addPage(self, panel, title):
-#        self.perspective.addPage(self.id, panel.id, title)
-#pb.setUnjellyableForClass(Notebook, Notebook)
