@@ -170,7 +170,7 @@ class SizedFrameBuilder(FrameBuilder):
         panel.SetSizerType(widgetData.otherData["sizerType"])
         return localRef
 
-class SizedPanelBuilder(FrameBuilder):
+class SizedPanelBuilder(WidgetBuilder):
     widgetClass = sc.SizedPanel
     referenceClass = SizedPanelReference
 
