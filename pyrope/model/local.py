@@ -205,19 +205,35 @@ class SizedFrame(Window):
     def getOtherData(self):
         return {"sizerType":self.sizerType}
 
-#class Dialog(Window):
-#    def __init__(self, app, handler, parent, title=u"", position=DefaultPosition, size=DefaultSize, style=wx.DEFAULT_DIALOG_STYLE):
-#        Window.__init__(self, app, handler, parent, position=position, size=size, style=style)
-#        self.title = title
-#    def ShowModal(self):
-#        return self.callRemote("ShowModal")
-#pb.setUnjellyableForClass(Dialog, Dialog)
-#
-#class MessageDialog(Dialog):
-#    def __init__(self, app, handler, parent, message, caption=u"Message Box", position=DefaultPosition, size=DefaultSize, style=wx.OK | wx.CANCEL):
-#        Dialog.__init__(self, app, handler, parent, title=caption, position=position, size=size, style=style)
-#        self.message = message
-#pb.setUnjellyableForClass(MessageDialog, MessageDialog)
+class Dialog(Window):
+    type = "Dialog"
+    def __init__(self, run, parent, title=u"", position=DefaultPosition, size=DefaultSize, style=wx.DEFAULT_DIALOG_STYLE):
+        Window.__init__(self, run, parent, position=position, size=size, style=style)
+        self.title = title
+    def getConstructorData(self):
+        d = Window.getConstructorData(self)
+        d["title"] = self.title
+        return d
+    def ShowModal(self):
+        return self.callRemote("ShowModal")
+pb.setUnjellyableForClass(Dialog, Dialog)
+
+class MessageDialog(Window):
+    type = "MessageDialog"
+    def __init__(self, run, parent, message, caption=u"Message Box", position=DefaultPosition, style=wx.OK | wx.CANCEL):
+        Window.__init__(self, run, parent, position=position, style=style)
+        self.caption = caption
+        self.message = message
+    def getConstructorData(self):
+        d = Window.getConstructorData(self)
+        d["caption"] = self.caption
+        d["message"] = self.message
+        #no size for message box
+        del d["size"]
+        return d
+    def ShowModal(self):
+        return self.callRemote("ShowModal")
+pb.setUnjellyableForClass(MessageDialog, MessageDialog)
 
 #########
 # Panel #

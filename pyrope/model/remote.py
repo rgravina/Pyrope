@@ -28,7 +28,8 @@ class WidgetConstructorDetails(pb.Copyable, pb.RemoteCopy):
 pb.setUnjellyableForClass(WidgetConstructorDetails, WidgetConstructorDetails)
 
 class Event(pb.Copyable, pb.RemoteCopy):
-    def __init__(self, widget, eventType, data):
+    """Describes a client-side event. Data argument to constructor is optional (some events like a button click don't really have any data associated with them."""
+    def __init__(self, widget, eventType, data=None):
         self.widget = widget
         self.eventType = eventType
         self.data = data
@@ -57,20 +58,20 @@ class WindowReference(PyropeReferenceable):
     def remote_Destroy(self):
         self._destroy()
     def _destroy(self):
-        """Check to see if this is the last window open (for this app) and if so, call shutdown on the RemoteApplicationHandler instance.
-        Finally, destroy the widget."""
-        self.app.topLevelWindows.remove(self.widget)
-        if not self.app.topLevelWindows:
-            self.app.shutdown()
         self.widget.Destroy()
     def onClose(self, event):
         if EventClose in self.boundEvents:
-#            self.remote.callRemote("handleEvent", EventClose)
-            pass
+            self.handleEvent(event)
         else:
+            #if the programmer hasnt handled the close event specifically, then the default behaviour is to close the form
             self._destroy()
     def handleEvent(self, event):
-        if event.GetEventType() == wx.EVT_TEXT.typeId:
+        #XXX:fixme
+        if event.GetEventType() == wx.EVT_CLOSE.typeId:
+            eventData = Event(self.remote, EventClose)
+        elif event.GetEventType() == wx.EVT_BUTTON.typeId:
+            eventData = Event(self.remote, EventButton)
+        elif event.GetEventType() == wx.EVT_TEXT.typeId:
             eventData = Event(self.remote, EventText, self.widget.GetValue())
         self.remote.callRemote("handleEvent", eventData)
         
@@ -87,16 +88,26 @@ class WindowReference(PyropeReferenceable):
     def remote_SetBackgroundColour(self, colour):
         return self.widget.SetBackgroundColour(colour)
 
-class FrameReference(WindowReference):
+class TopLevelWindowReference(WindowReference):
+    def _destroy(self):
+        """Check to see if this is the last window open (for this app) and if so, call shutdown on the RemoteApplicationHandler instance.
+        Finally, destroy the widget."""
+        self.app.topLevelWindows.remove(self.widget)
+        if not self.app.topLevelWindows:
+            self.app.shutdown()
+        self.widget.Destroy()
+
+class FrameReference(TopLevelWindowReference):
     pass
 
-class SizedFrameReference(WindowReference):
+class SizedFrameReference(TopLevelWindowReference):
     pass
+
+class DialogReference(TopLevelWindowReference):
+    pass
+
 
 class SizedPanelReference(WindowReference):
-    pass
-
-class DialogReference(WindowReference):
     pass
 
 class TextBoxReference(WindowReference):
@@ -126,9 +137,7 @@ class WidgetBuilder(object):
         app.widgets[widgetData.remoteWidgetReference] = localRef.widget
         return localRef
 
-class FrameBuilder(WidgetBuilder):
-    widgetClass = wx.Frame
-    referenceClass = FrameReference
+class TopLevelWindowBuilder(WidgetBuilder):
     def createLocalReference(self, app, widgetData):
         localRef = WidgetBuilder.createLocalReference(self, app, widgetData)
         localRef.widget.Bind(wx.EVT_CLOSE, localRef.onClose)
@@ -139,6 +148,18 @@ class FrameBuilder(WidgetBuilder):
                 #server needs to know about child reference
                 childData.remoteWidgetReference.callRemote("updateRemote", childRef)
         return localRef
+
+class FrameBuilder(TopLevelWindowBuilder):
+    widgetClass = wx.Frame
+    referenceClass = FrameReference
+
+class DialogBuilder(TopLevelWindowBuilder):
+    widgetClass = wx.Dialog
+    referenceClass = DialogReference
+
+class MessageDialogBuilder(TopLevelWindowBuilder):
+    widgetClass = wx.MessageDialog
+    referenceClass = DialogReference
 
 class SizedFrameBuilder(FrameBuilder):
     widgetClass = sc.SizedFrame
