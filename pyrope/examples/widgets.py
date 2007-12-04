@@ -27,7 +27,7 @@ class DemoFrame(SizedFrame):
             dlg.ShowModal().addCallback(_done)
         dlg = MessageDialog(self.run, self, u"Are you sure you want to quit Widget Demo?", caption=u"Quit Widget Demo?", style=wx.OK|wx.CANCEL|wx.ICON_QUESTION)
         dlg.createRemote().addCallback(_done)
-
+    
 class WidgetsApplication(Application):
     def __init__(self):
         Application.__init__(self, "Widget Demo", description="Demonstrates Pyrope widgets, event handling etc..")
@@ -36,6 +36,7 @@ class WidgetsApplication(Application):
             #although Centre and Show return Deferred's, their order of execution is not important, so we can ignore them.
             #GetBackgroundColour returns the localally cached value
             frame.Centre()
+            #note: frame.callRemote("Show") also works
             frame.Show()
             
         #create a local representation of a frame

@@ -1,5 +1,5 @@
 from pyrope.server import Application
-from pyrope.model import Frame
+from pyrope.model import *
 
 class HelloWorldApplication(Application):
     def __init__(self):

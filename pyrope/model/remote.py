@@ -106,7 +106,6 @@ class SizedFrameReference(TopLevelWindowReference):
 class DialogReference(TopLevelWindowReference):
     pass
 
-
 class SizedPanelReference(WindowReference):
     pass
 
@@ -135,13 +134,6 @@ class WidgetBuilder(object):
         window = self.widgetClass(**widgetData.constructorData)
         localRef = self.referenceClass(app, window, widgetData.remoteWidgetReference, widgetData.eventHandlers)
         app.widgets[widgetData.remoteWidgetReference] = localRef.widget
-        return localRef
-
-class TopLevelWindowBuilder(WidgetBuilder):
-    def createLocalReference(self, app, widgetData):
-        localRef = WidgetBuilder.createLocalReference(self, app, widgetData)
-        localRef.widget.Bind(wx.EVT_CLOSE, localRef.onClose)
-        app.topLevelWindows.append(localRef.widget)
         if widgetData.children:
             for childData in widgetData.children:
                 childRef = WidgetFactory.create(app, childData)
@@ -149,8 +141,19 @@ class TopLevelWindowBuilder(WidgetBuilder):
                 childData.remoteWidgetReference.callRemote("updateRemote", childRef)
         return localRef
 
+class TopLevelWindowBuilder(WidgetBuilder):
+    def createLocalReference(self, app, widgetData):
+        localRef = WidgetBuilder.createLocalReference(self, app, widgetData)
+        localRef.widget.Bind(wx.EVT_CLOSE, localRef.onClose)
+        app.topLevelWindows.append(localRef.widget)
+        return localRef
+
 class FrameBuilder(TopLevelWindowBuilder):
     widgetClass = wx.Frame
+    referenceClass = FrameReference
+
+class MiniFrameBuilder(TopLevelWindowBuilder):
+    widgetClass = wx.MiniFrame
     referenceClass = FrameReference
 
 class DialogBuilder(TopLevelWindowBuilder):
@@ -173,6 +176,11 @@ class SizedFrameBuilder(FrameBuilder):
 class SizedPanelBuilder(WidgetBuilder):
     widgetClass = sc.SizedPanel
     referenceClass = SizedPanelReference
+    def createLocalReference(self, app, widgetData):
+        localRef = WidgetBuilder.createLocalReference(self, app, widgetData)
+        panel = localRef.widget
+        panel.SetSizerType(widgetData.otherData["sizerType"])
+        return localRef
 
 class TextBoxBuilder(WidgetBuilder):
     widgetClass = wx.TextCtrl

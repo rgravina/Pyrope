@@ -4,9 +4,18 @@ from pyrope.model import *
 
 class AddressBookFrame(SizedFrame):
     def __init__(self, run, parent):
-        SizedFrame.__init__(self, run, parent, title=u"Address Book", size=(500,400), style=wx.DEFAULT_FRAME_STYLE ^ wx.MAXIMIZE_BOX)
+        SizedFrame.__init__(self, run, parent, title=u"Address Book")
+
+        #left panel - list of address book entries
         leftPanel = SizedPanel(run, self)
-        rightPanel = SizedPanel(run, self)
+        Label(run, leftPanel, value=u"TODO:\nlist\nof\nnames\nhere")
+
+        #right panel - address book entry form
+        rightPanel = SizedPanel(run, self, sizerType="form")
+        Label(run, rightPanel, value=u"Name")
+        TextBox(run, rightPanel, value=u"Robert Gravina", size=(200,-1))
+        Label(run, rightPanel, value=u"Email")
+        TextBox(run, rightPanel, value=u"robert@gravina.com", size=(200,-1))
 
 class AddressBookApplication(Application):
     def __init__(self):

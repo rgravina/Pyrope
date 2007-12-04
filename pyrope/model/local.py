@@ -196,6 +196,17 @@ class Frame(Window):
         d["title"] = self.title
         return d
 
+class MiniFrame(Window):
+    type = "MiniFrame"
+    def __init__(self, run, parent, title=u"", position=DefaultPosition, size=DefaultSize, style=wx.DEFAULT_FRAME_STYLE):
+        Window.__init__(self, run, parent, position=position, size=size, style=style)
+        self.title = title
+    def getConstructorData(self):
+        d = Window.getConstructorData(self)
+        d["title"] = self.title
+        return d
+
+
 class SizedFrame(Window):
     type = "SizedFrame"
     def __init__(self, run, parent, title=u"", position=DefaultPosition, size=DefaultSize, style=wx.DEFAULT_FRAME_STYLE, sizerType="horizontal"):
@@ -240,8 +251,11 @@ pb.setUnjellyableForClass(MessageDialog, MessageDialog)
 #########
 class SizedPanel(Window):
     type = "SizedPanel"
-    def __init__(self, run, parent, position=DefaultPosition, size=DefaultSize):
+    def __init__(self, run, parent, position=DefaultPosition, size=DefaultSize, sizerType="vertical"):
         Window.__init__(self, run, parent, position=position, size=size)
+        self.sizerType = sizerType
+    def getOtherData(self):
+        return {"sizerType":self.sizerType}
 
 ###########
 # Widgets #
