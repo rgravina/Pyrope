@@ -18,13 +18,13 @@ pb.setUnjellyableForClass(RemoteApplication, RemoteApplication)
 class WidgetConstructorDetails(pb.Copyable, pb.RemoteCopy):
     """Describes a information needed by the client to create a local wxWidget which represents a server-side Pyrope widget. 
     It is a U{Parameter Object<http://www.refactoring.com/catalog/introduceParameterObject.html>}"""
-    def __init__(self, pyropeWidget):
-        self.remoteWidgetReference = pyropeWidget
-        self.type = pyropeWidget.__class__.type
-        self.constructorData = pyropeWidget.getConstructorData()
-        self.otherData = pyropeWidget.getOtherData()
-        self.children = pyropeWidget.getChildren()
-        self.eventHandlers = pyropeWidget.getEventHandlers()
+    def __init__(self, remoteWidgetReference, type, constructorData, otherData=None, children=None, eventHandlers=None):
+        self.remoteWidgetReference = remoteWidgetReference
+        self.type = type
+        self.constructorData = constructorData
+        self.otherData = otherData
+        self.children = children
+        self.eventHandlers = eventHandlers
 pb.setUnjellyableForClass(WidgetConstructorDetails, WidgetConstructorDetails)
 
 class Event(pb.Copyable, pb.RemoteCopy):
@@ -45,6 +45,16 @@ class PyropeReferenceable(pb.Referenceable):
         except NoSuchMethod:
             return getattr(self.widget, message)()
 
+def returnWxPythonObject(object):
+    """Use this method when returning objects from wxPython methods. Why? E.g. say a wxPython returns a wxPoint, we can't send this directly over the netowork 
+    (Twisted Perspective Broker won't allow it for security reasons), so we can just send a tuple with the coordinates instead. The default behaviour is 
+    just to return the passed argument"""
+    def returnDefault(object):
+        return object
+    getattr(returnWxPythonObject, "return"+object.__class__.__name__, returnDefault)
+    def returnPoint(object):
+        return (object.x, object.y)
+ 
 class WindowReference(PyropeReferenceable):
     """Manages a local wxWindow"""
     def __init__(self, app, widget, remote, handlers):
@@ -74,17 +84,13 @@ class WindowReference(PyropeReferenceable):
         elif event.GetEventType() == wx.EVT_TEXT.typeId:
             eventData = Event(self.remote, EventText, self.widget.GetValue())
         self.remote.callRemote("handleEvent", eventData)
-        
     def remote_Centre(self, direction, centreOnScreen): 
         dir = direction
         if centreOnScreen:
             dir | wx.CENTRE_ON_SCREEN
         return self.widget.Centre(direction = dir)
-    def remote_ClientToScreen(self, point):
-        point = self.widget.ClientToScreen(point)
-        #can't return a wxPoint directly over the network, so return a tuple instead
-        #TODO: generalise this
-        return (point.x, point.y)
+    def remote_ClientToScreen(self, (x, y)):
+        return self.widget.ClientToScreenXY(x, y)
     def remote_SetBackgroundColour(self, colour):
         return self.widget.SetBackgroundColour(colour)
 

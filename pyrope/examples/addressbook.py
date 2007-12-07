@@ -2,9 +2,9 @@ import wx
 from pyrope.server import Application
 from pyrope.model import *
 
-class AddressBookFrame(SizedFrame):
+class AddressBookFrame(Frame):
     def __init__(self, run, parent):
-        SizedFrame.__init__(self, run, parent, title=u"Address Book")
+        Frame.__init__(self, run, parent, title=u"Address Book")
 
         #left panel - list of address book entries
         leftPanel = SizedPanel(run, self)

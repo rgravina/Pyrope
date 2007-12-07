@@ -61,7 +61,7 @@ class PyropeWidget(pb.Referenceable):
     @inlineCallbacks
     def createRemote(self):
         #creates remote widget, and gets a pb.RemoteReference to it's client-side proxy
-        self.remote = yield self.run.handler.callRemote("createWidget", WidgetConstructorDetails(self))
+        self.remote = yield self.run.handler.callRemote("createWidget", self.getConstructorDetails())
     def callRemote(self, functName, *args):
         if self.remote:
             return self.remote.callRemote(functName, *args)
@@ -91,41 +91,46 @@ class Window(PyropeWidget):
         self.style = style
         #other props
         self.children = []
-    def getConstructorData(self):
+    def getConstructorDetails(self):
+        """Creates an instance of WidgetConstructorDetails, with all the details the client needs to create 
+        the client-side version of this widget"""
+        return WidgetConstructorDetails(self, self.type, self._getConstructorData(), self._getOtherData(), 
+                                        self._getChildren(), self._getEventHandlers())
+    def _getConstructorData(self):
         d = {}
         d["parent"] = self.parent
         d["pos"] = self.pos
         d["size"] = self.size
         d["style"] = self.style
         return d
-    def getOtherData(self):
+    def _getOtherData(self):
         pass
-    def getEventHandlers(self):
+    def _getEventHandlers(self):
         eventHandlers = []
         for event, fn in self.eventHandlers.items():
             eventHandlers.append(event)
         return eventHandlers
-    def getChildren(self):
+    def _getChildren(self):
         children = []
         for child in self.children:
-            children.append(WidgetConstructorDetails(child))
+            children.append(child.getConstructorDetails())
         return children
     def handleEvent(self, event):
         """Default response to an event is to ignore it. Implement useful behaviour in subsclasses (e.g. for TextBox, on a EventText, update the textboxes value attribute)"""
         pass
-    def ClientToScreen(self, point):
+    def clientToScreen(self, point):
         return self.callRemote("ClientToScreen", point)
-    def Hide(self):
+    def hide(self):
         return self.callRemote("Hide")
-    def Show(self):
+    def show(self):
         return self.callRemote("Show")
-    def Centre(self, direction=wx.BOTH, centreOnScreen=False):
+    def centre(self, direction=wx.BOTH, centreOnScreen=False):
         return self.callRemote("Centre", direction, centreOnScreen)
-    def Destroy(self):
+    def destroy(self):
         return self.callRemote("Destroy")
-    def Disable(self):
+    def disable(self):
         return self.callRemote("Disable")
-    def Enable(self):
+    def enable(self):
         return self.callRemote("Enable")
 
 #    def GetBackgroundColour(self):
@@ -158,8 +163,8 @@ class TextBox(Window):
     def __init__(self, run, parent, value=u"", position=DefaultPosition, size=DefaultSize, style=0):
         Window.__init__(self, run, parent, position=position, size=size, style=style)
         self.value = value
-    def getConstructorData(self):
-        d = Window.getConstructorData(self)
+    def _getConstructorData(self):
+        d = Window._getConstructorData(self)
         d["value"] = self.value
         return d
     def handleEvent(self, event):
@@ -170,11 +175,11 @@ class Label(Window):
     def __init__(self, run, parent, value=u"", position=DefaultPosition, size=DefaultSize, style=0):
         Window.__init__(self, run, parent, position=position, size=size, style=style)
         self.label = value
-    def getConstructorData(self):
-        d = Window.getConstructorData(self)
+    def _getConstructorData(self):
+        d = Window._getConstructorData(self)
         d["label"] = self.label
         return d
-    def SetValue(self, label):
+    def setValue(self, label):
         #set the local background colour
         self.label = label
         #set remote
@@ -186,46 +191,48 @@ class Label(Window):
 # Frames and Dialogs #
 ######################
 
+#class Frame(Window):
+#    type = "Frame"
+#    def __init__(self, run, parent, title=u"", position=DefaultPosition, size=DefaultSize, style=wx.DEFAULT_FRAME_STYLE):
+#        Window.__init__(self, run, parent, position=position, size=size, style=style)
+#        self.title = title
+#    def getConstructorData(self):
+#        d = Window.getConstructorData(self)
+#        d["title"] = self.title
+#        return d
+#
+#class MiniFrame(Window):
+#    type = "MiniFrame"
+#    def __init__(self, run, parent, title=u"", position=DefaultPosition, size=DefaultSize, style=wx.DEFAULT_FRAME_STYLE):
+#        Window.__init__(self, run, parent, position=position, size=size, style=style)
+#        self.title = title
+#    def getConstructorData(self):
+#        d = Window.getConstructorData(self)
+#        d["title"] = self.title
+#        return d
+
+
 class Frame(Window):
-    type = "Frame"
-    def __init__(self, run, parent, title=u"", position=DefaultPosition, size=DefaultSize, style=wx.DEFAULT_FRAME_STYLE):
-        Window.__init__(self, run, parent, position=position, size=size, style=style)
-        self.title = title
-    def getConstructorData(self):
-        d = Window.getConstructorData(self)
-        d["title"] = self.title
-        return d
-
-class MiniFrame(Window):
-    type = "MiniFrame"
-    def __init__(self, run, parent, title=u"", position=DefaultPosition, size=DefaultSize, style=wx.DEFAULT_FRAME_STYLE):
-        Window.__init__(self, run, parent, position=position, size=size, style=style)
-        self.title = title
-    def getConstructorData(self):
-        d = Window.getConstructorData(self)
-        d["title"] = self.title
-        return d
-
-
-class SizedFrame(Window):
+    """A Pyrope Frame uses a wxPython SizedFrame on the client-side. This is so, at least for simple cases, programmers won't
+    need to deal with sizers so much."""
     type = "SizedFrame"
     def __init__(self, run, parent, title=u"", position=DefaultPosition, size=DefaultSize, style=wx.DEFAULT_FRAME_STYLE, sizerType="horizontal"):
         Window.__init__(self, run, parent, position=position, size=size, style=style)
         self.title = title
         self.sizerType = sizerType
-    def getOtherData(self):
-        return {"sizerType":self.sizerType}
+    def _getOtherData(self):
+        return {"title":self.title, "sizerType":self.sizerType}
 
 class Dialog(Window):
     type = "Dialog"
     def __init__(self, run, parent, title=u"", position=DefaultPosition, size=DefaultSize, style=wx.DEFAULT_DIALOG_STYLE):
         Window.__init__(self, run, parent, position=position, size=size, style=style)
         self.title = title
-    def getConstructorData(self):
-        d = Window.getConstructorData(self)
+    def _getConstructorData(self):
+        d = Window._getConstructorData(self)
         d["title"] = self.title
         return d
-    def ShowModal(self):
+    def showModal(self):
         return self.callRemote("ShowModal")
 pb.setUnjellyableForClass(Dialog, Dialog)
 
@@ -235,14 +242,14 @@ class MessageDialog(Window):
         Window.__init__(self, run, parent, position=position, style=style)
         self.caption = caption
         self.message = message
-    def getConstructorData(self):
-        d = Window.getConstructorData(self)
+    def _getConstructorData(self):
+        d = Window._getConstructorData(self)
         d["caption"] = self.caption
         d["message"] = self.message
         #no size for message box
         del d["size"]
         return d
-    def ShowModal(self):
+    def showModal(self):
         return self.callRemote("ShowModal")
 pb.setUnjellyableForClass(MessageDialog, MessageDialog)
 
@@ -254,7 +261,7 @@ class SizedPanel(Window):
     def __init__(self, run, parent, position=DefaultPosition, size=DefaultSize, sizerType="vertical"):
         Window.__init__(self, run, parent, position=position, size=size)
         self.sizerType = sizerType
-    def getOtherData(self):
+    def _getOtherData(self):
         return {"sizerType":self.sizerType}
 
 ###########
@@ -265,7 +272,7 @@ class Button(Window):
     def __init__(self, run, parent, value=u""):
         Window.__init__(self, run, parent)
         self.label = value
-    def getConstructorData(self):
-        d = Window.getConstructorData(self)
+    def _getConstructorData(self):
+        d = Window._getConstructorData(self)
         d["label"] = self.label
         return d
