@@ -220,8 +220,12 @@ class Frame(Window):
         Window.__init__(self, run, parent, position=position, size=size, style=style)
         self.title = title
         self.sizerType = sizerType
+    def _getConstructorData(self):
+        d = Window._getConstructorData(self)
+        d["title"] = self.title
+        return d
     def _getOtherData(self):
-        return {"title":self.title, "sizerType":self.sizerType}
+        return {"sizerType":self.sizerType}
 
 class Dialog(Window):
     type = "Dialog"
@@ -256,7 +260,7 @@ pb.setUnjellyableForClass(MessageDialog, MessageDialog)
 #########
 # Panel #
 #########
-class SizedPanel(Window):
+class Panel(Window):
     type = "SizedPanel"
     def __init__(self, run, parent, position=DefaultPosition, size=DefaultSize, sizerType="vertical"):
         Window.__init__(self, run, parent, position=position, size=size)

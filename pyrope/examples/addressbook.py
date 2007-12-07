@@ -7,11 +7,11 @@ class AddressBookFrame(Frame):
         Frame.__init__(self, run, parent, title=u"Address Book")
 
         #left panel - list of address book entries
-        leftPanel = SizedPanel(run, self)
+        leftPanel = Panel(run, self)
         Label(run, leftPanel, value=u"TODO:\nlist\nof\nnames\nhere")
 
         #right panel - address book entry form
-        rightPanel = SizedPanel(run, self, sizerType="form")
+        rightPanel = Panel(run, self, sizerType="form")
         Label(run, rightPanel, value=u"Name")
         TextBox(run, rightPanel, value=u"Robert Gravina", size=(200,-1))
         Label(run, rightPanel, value=u"Email")
@@ -23,8 +23,8 @@ class AddressBookApplication(Application):
 
     def start(self, run):
         def _done(result):
-            frame.Centre()
-            frame.Show()
+            frame.centre()
+            frame.show()
 
         frame = AddressBookFrame(run, None)
         frame.createRemote().addCallback(_done)
