@@ -130,15 +130,10 @@ class WidgetBuilder(object):
             else:
                 widgetData.constructorData["parent"] = widget
     
-    def pyropeToWxStyles(self, styleData):
-        return None
-    
     def createLocalReference(self, app, widgetData):
         #XXX: this will break if called from a WidgetBuilder instance!
-        #first, we need to map Pyrope styles to the wxWidget style flags mapper
-        styleVal = self.pyropeToWxStyles(widgetData.styleData)
-        if styleVal != None:
-            widgetData.constructorData["style"] = styleVal
+        if widgetData.styleData != None:
+            widgetData.constructorData["style"] = widgetData.styleData
         window = self.widgetClass(**widgetData.constructorData)
         localRef = self.referenceClass(app, window, widgetData.remoteWidgetReference, widgetData.eventHandlers)
         app.widgets[widgetData.remoteWidgetReference] = localRef.widget

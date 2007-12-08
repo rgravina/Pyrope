@@ -90,6 +90,8 @@ class Window(PyropeWidget):
         self.size = size
         #other props
         self.children = []
+        self._addedStyles = []
+        self._removedStyles = []
     def getConstructorDetails(self):
         """Creates an instance of WidgetConstructorDetails, with all the details the client needs to create 
         the client-side version of this widget"""
@@ -103,8 +105,13 @@ class Window(PyropeWidget):
         return d
     def _getOtherData(self):
         pass
+    def addStyle(self, style):
+        self._addedStyles.append(style)
     def _getStyleData(self):
-        pass
+        style=0
+        for decorator in self._addedStyles():
+            style = style | decorator.toWxStyle()
+        return style
     def _getEventHandlers(self):
         eventHandlers = []
         for event, fn in self.eventHandlers.items():

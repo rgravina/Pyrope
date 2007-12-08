@@ -1,5 +1,6 @@
 from pyrope.server import Application
 from pyrope.model import *
+from pyrope.model.decorators import *
 from twisted.internet.defer import inlineCallbacks
 
 class DemoFrame(Frame):
@@ -47,5 +48,6 @@ class WidgetsApplication(Application):
             
         #create a local representation of a frame
         frame = DemoFrame(run, None)
+        frame.addStyle(BorderStyle(type=BorderStyle.SUNKEN))
         #create the resource on client (to show it, call frame.show())
         frame.createRemote().addCallback(_done)
