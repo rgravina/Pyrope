@@ -109,7 +109,7 @@ class Window(PyropeWidget):
         self._addedStyles.append(style)
     def _getStyleData(self):
         style=0
-        for decorator in self._addedStyles():
+        for decorator in self._addedStyles:
             style = style | decorator.toWxStyle()
         return style
     def _getEventHandlers(self):

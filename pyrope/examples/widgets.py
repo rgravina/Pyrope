@@ -48,6 +48,5 @@ class WidgetsApplication(Application):
             
         #create a local representation of a frame
         frame = DemoFrame(run, None)
-        frame.addStyle(BorderStyle(type=BorderStyle.SUNKEN))
         #create the resource on client (to show it, call frame.show())
         frame.createRemote().addCallback(_done)
