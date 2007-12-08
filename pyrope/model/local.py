@@ -228,7 +228,7 @@ class Frame(Window):
         return {"sizerType":self.sizerType}
 
 class Dialog(Window):
-    type = "Dialog"
+    type = "SizedDialog"
     def __init__(self, run, parent, title=u"", position=DefaultPosition, size=DefaultSize, style=wx.DEFAULT_DIALOG_STYLE):
         Window.__init__(self, run, parent, position=position, size=size, style=style)
         self.title = title
@@ -281,6 +281,16 @@ class Button(Window):
         d["label"] = self.label
         return d
 
+class Choice(Window):
+    type = "Choice"
+    def __init__(self, run, parent, choices=u""):
+        Window.__init__(self, run, parent)
+        self.choices = choices
+    def _getConstructorData(self):
+        d = Window._getConstructorData(self)
+        d["choices"] = self.choices
+        return d
+
 class CheckBox(Window):
     type = "CheckBox"
     def __init__(self, run, parent, label=u"", position=DefaultPosition, size=DefaultSize):
@@ -299,4 +309,14 @@ class ThreeStateCheckBox(Window):
     def _getConstructorData(self):
         d = Window._getConstructorData(self)
         d["label"] = self.label
+        return d
+
+class Gauge(Window):
+    type = "Gauge"
+    def __init__(self, run, parent, range=100, position=DefaultPosition, size=DefaultSize):
+        Window.__init__(self, run, parent, position=position, size=size)
+        self.range = range
+    def _getConstructorData(self):
+        d = Window._getConstructorData(self)
+        d["range"] = self.range
         return d

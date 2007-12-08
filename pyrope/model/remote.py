@@ -115,15 +115,6 @@ class DialogReference(TopLevelWindowReference):
 class SizedPanelReference(WindowReference):
     pass
 
-class TextBoxReference(WindowReference):
-    pass
-
-class ButtonReference(WindowReference):
-    pass
-
-class CheckBoxReference(WindowReference):
-    pass
-
 class LabelReference(WindowReference):
     def remote_SetLabel(self, label):
         return self.widget.SetLabel(label)
@@ -133,7 +124,7 @@ class WidgetBuilder(object):
         parent = widgetData.constructorData["parent"]
         if parent:
             widget =  app.widgets[parent] 
-            if isinstance(widget, sc.SizedFrame):
+            if isinstance(widget, (sc.SizedFrame, sc.SizedDialog)):
                 widgetData.constructorData["parent"] = widget.GetContentsPane()
             else:
                 widgetData.constructorData["parent"] = widget
@@ -169,6 +160,10 @@ class DialogBuilder(TopLevelWindowBuilder):
     widgetClass = wx.Dialog
     referenceClass = DialogReference
 
+class SizedDialogBuilder(TopLevelWindowBuilder):
+    widgetClass = sc.SizedDialog
+    referenceClass = DialogReference
+
 class MessageDialogBuilder(TopLevelWindowBuilder):
     widgetClass = wx.MessageDialog
     referenceClass = DialogReference
@@ -193,7 +188,7 @@ class SizedPanelBuilder(WidgetBuilder):
 
 class TextBoxBuilder(WidgetBuilder):
     widgetClass = wx.TextCtrl
-    referenceClass = TextBoxReference
+    referenceClass = WindowReference
 
 class LabelBuilder(WidgetBuilder):
     widgetClass = wx.StaticText
@@ -201,15 +196,23 @@ class LabelBuilder(WidgetBuilder):
 
 class ButtonBuilder(WidgetBuilder):
     widgetClass = wx.Button
-    referenceClass = ButtonReference
+    referenceClass = WindowReference
+
+class ChoiceBuilder(WidgetBuilder):
+    widgetClass = wx.Choice
+    referenceClass = WindowReference
 
 class CheckBoxBuilder(WidgetBuilder):
     widgetClass = wx.CheckBox
-    referenceClass = CheckBoxReference
+    referenceClass = WindowReference
 
 class ThreeStateCheckBoxBuilder(WidgetBuilder):
     widgetClass = wx.CheckBox
-    referenceClass = CheckBoxReference
+    referenceClass = WindowReference
+
+class GaugeBuilder(WidgetBuilder):
+    widgetClass = wx.Gauge
+    referenceClass = WindowReference
 
 class WidgetFactory(object):
     """A Factory that produces wxWidgets based on the class of the remote Pyrope widget passed to the constructor."""
