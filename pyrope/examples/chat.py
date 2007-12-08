@@ -5,8 +5,9 @@ class ChatApplication(Application):
     def __init__(self):
         Application.__init__(self, "Chat", description="A simple chat application which demonstrates multi-user applications.")
     def start(self, run):
-        def _done(result, frame):
+        def _done(result):
+            frame.centre()
             frame.show()
         #create a frame on the client
         frame = Frame(run, None, title=u"Chat")
-        frame.createRemote().addCallback(_done, frame)
+        frame.createRemote().addCallback(_done)

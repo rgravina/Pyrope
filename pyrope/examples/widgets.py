@@ -31,7 +31,7 @@ class DemoFrame(Frame):
                 if result == wx.ID_OK:
                     self.destroy()
             dlg.showModal().addCallback(_done)
-        dlg = MessageDialog(self.run, self, u"Are you sure you want to quit Widget Demo?", caption=u"Quit Widget Demo?", style=wx.OK|wx.CANCEL|wx.ICON_QUESTION)
+        dlg = MessageDialog(self.run, self, u"Are you sure you want to quit Widget Demo?", caption=u"Quit Widget Demo?")
         dlg.createRemote().addCallback(_done)
     
 class WidgetsApplication(Application):

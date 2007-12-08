@@ -18,11 +18,12 @@ pb.setUnjellyableForClass(RemoteApplication, RemoteApplication)
 class WidgetConstructorDetails(pb.Copyable, pb.RemoteCopy):
     """Describes a information needed by the client to create a local wxWidget which represents a server-side Pyrope widget. 
     It is a U{Parameter Object<http://www.refactoring.com/catalog/introduceParameterObject.html>}"""
-    def __init__(self, remoteWidgetReference, type, constructorData, otherData=None, children=None, eventHandlers=None):
+    def __init__(self, remoteWidgetReference, type, constructorData, otherData=None, styleData=None, children=None, eventHandlers=None):
         self.remoteWidgetReference = remoteWidgetReference
         self.type = type
         self.constructorData = constructorData
         self.otherData = otherData
+        self.styleData = styleData
         self.children = children
         self.eventHandlers = eventHandlers
 pb.setUnjellyableForClass(WidgetConstructorDetails, WidgetConstructorDetails)
@@ -128,9 +129,16 @@ class WidgetBuilder(object):
                 widgetData.constructorData["parent"] = widget.GetContentsPane()
             else:
                 widgetData.constructorData["parent"] = widget
-                 
+    
+    def pyropeToWxStyles(self, styleData):
+        return None
+    
     def createLocalReference(self, app, widgetData):
         #XXX: this will break if called from a WidgetBuilder instance!
+        #first, we need to map Pyrope styles to the wxWidget style flags mapper
+        styleVal = self.pyropeToWxStyles(widgetData.styleData)
+        if styleVal != None:
+            widgetData.constructorData["style"] = styleVal
         window = self.widgetClass(**widgetData.constructorData)
         localRef = self.referenceClass(app, window, widgetData.remoteWidgetReference, widgetData.eventHandlers)
         app.widgets[widgetData.remoteWidgetReference] = localRef.widget

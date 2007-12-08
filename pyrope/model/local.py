@@ -81,29 +81,29 @@ class PyropeWidget(pb.Referenceable):
 
 class Window(PyropeWidget):
     type = "Window"
-    def __init__(self, run, parent, position=DefaultPosition, size=DefaultSize, style=0):
+    def __init__(self, run, parent, position=DefaultPosition, size=DefaultSize):
         PyropeWidget.__init__(self, run)
         self.parent = parent
         if parent != None:
             parent.children.append(self)
         self.pos = position
         self.size = size
-        self.style = style
         #other props
         self.children = []
     def getConstructorDetails(self):
         """Creates an instance of WidgetConstructorDetails, with all the details the client needs to create 
         the client-side version of this widget"""
-        return WidgetConstructorDetails(self, self.type, self._getConstructorData(), self._getOtherData(), 
+        return WidgetConstructorDetails(self, self.type, self._getConstructorData(), self._getOtherData(), self._getStyleData(), 
                                         self._getChildren(), self._getEventHandlers())
     def _getConstructorData(self):
         d = {}
         d["parent"] = self.parent
         d["pos"] = self.pos
         d["size"] = self.size
-        d["style"] = self.style
         return d
     def _getOtherData(self):
+        pass
+    def _getStyleData(self):
         pass
     def _getEventHandlers(self):
         eventHandlers = []
@@ -160,8 +160,8 @@ class Window(PyropeWidget):
 
 class TextBox(Window):
     type = "TextBox"
-    def __init__(self, run, parent, value=u"", position=DefaultPosition, size=DefaultSize, style=0):
-        Window.__init__(self, run, parent, position=position, size=size, style=style)
+    def __init__(self, run, parent, value=u"", position=DefaultPosition, size=DefaultSize):
+        Window.__init__(self, run, parent, position=position, size=size)
         self.value = value
     def _getConstructorData(self):
         d = Window._getConstructorData(self)
@@ -172,8 +172,8 @@ class TextBox(Window):
         self.value = event.data
 class Label(Window):
     type = "Label"
-    def __init__(self, run, parent, value=u"", position=DefaultPosition, size=DefaultSize, style=0):
-        Window.__init__(self, run, parent, position=position, size=size, style=style)
+    def __init__(self, run, parent, value=u"", position=DefaultPosition, size=DefaultSize):
+        Window.__init__(self, run, parent, position=position, size=size)
         self.label = value
     def _getConstructorData(self):
         d = Window._getConstructorData(self)
@@ -216,8 +216,8 @@ class Frame(Window):
     """A Pyrope Frame uses a wxPython SizedFrame on the client-side. This is so, at least for simple cases, programmers won't
     need to deal with sizers so much."""
     type = "SizedFrame"
-    def __init__(self, run, parent, title=u"", position=DefaultPosition, size=DefaultSize, style=wx.DEFAULT_FRAME_STYLE, sizerType="horizontal"):
-        Window.__init__(self, run, parent, position=position, size=size, style=style)
+    def __init__(self, run, parent, title=u"", position=DefaultPosition, size=DefaultSize, sizerType="horizontal"):
+        Window.__init__(self, run, parent, position=position, size=size)
         self.title = title
         self.sizerType = sizerType
     def _getConstructorData(self):
@@ -229,8 +229,8 @@ class Frame(Window):
 
 class Dialog(Window):
     type = "SizedDialog"
-    def __init__(self, run, parent, title=u"", position=DefaultPosition, size=DefaultSize, style=wx.DEFAULT_DIALOG_STYLE):
-        Window.__init__(self, run, parent, position=position, size=size, style=style)
+    def __init__(self, run, parent, title=u"", position=DefaultPosition, size=DefaultSize):
+        Window.__init__(self, run, parent, position=position, size=size)
         self.title = title
     def _getConstructorData(self):
         d = Window._getConstructorData(self)
@@ -242,8 +242,8 @@ pb.setUnjellyableForClass(Dialog, Dialog)
 
 class MessageDialog(Window):
     type = "MessageDialog"
-    def __init__(self, run, parent, message, caption=u"Message Box", position=DefaultPosition, style=wx.OK | wx.CANCEL):
-        Window.__init__(self, run, parent, position=position, style=style)
+    def __init__(self, run, parent, message, caption=u"Message Box", position=DefaultPosition):
+        Window.__init__(self, run, parent, position=position)
         self.caption = caption
         self.message = message
     def _getConstructorData(self):
@@ -304,7 +304,7 @@ class CheckBox(Window):
 class ThreeStateCheckBox(Window):
     type = "CheckBox"
     def __init__(self, run, parent, label=u"", position=DefaultPosition, size=DefaultSize):
-        Window.__init__(self, run, parent, position=position, size=size, style=wx.CHK_3STATE|wx.CHK_ALLOW_3RD_STATE_FOR_USER)
+        Window.__init__(self, run, parent, position=position, size=size)
         self.label = label
     def _getConstructorData(self):
         d = Window._getConstructorData(self)
