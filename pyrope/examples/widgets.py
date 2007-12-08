@@ -12,6 +12,9 @@ class DemoFrame(Frame):
         self.button.bind(EventButton, self.onButton)
         self.bind(EventClose, self.onClose)
 
+        self.checkBox = CheckBox(run, self, label=u"genki?")
+        self.checkBoxThree = ThreeStateCheckBox(run, self, label=u"genki?")
+
     def onText(self, event):
         self.label.setValue(event.widget.value)
 

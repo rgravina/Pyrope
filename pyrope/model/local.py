@@ -280,3 +280,23 @@ class Button(Window):
         d = Window._getConstructorData(self)
         d["label"] = self.label
         return d
+
+class CheckBox(Window):
+    type = "CheckBox"
+    def __init__(self, run, parent, label=u"", position=DefaultPosition, size=DefaultSize):
+        Window.__init__(self, run, parent, position=position, size=size)
+        self.label = label
+    def _getConstructorData(self):
+        d = Window._getConstructorData(self)
+        d["label"] = self.label
+        return d
+
+class ThreeStateCheckBox(Window):
+    type = "CheckBox"
+    def __init__(self, run, parent, label=u"", position=DefaultPosition, size=DefaultSize):
+        Window.__init__(self, run, parent, position=position, size=size, style=wx.CHK_3STATE|wx.CHK_ALLOW_3RD_STATE_FOR_USER)
+        self.label = label
+    def _getConstructorData(self):
+        d = Window._getConstructorData(self)
+        d["label"] = self.label
+        return d

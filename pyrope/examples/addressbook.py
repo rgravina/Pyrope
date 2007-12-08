@@ -25,6 +25,5 @@ class AddressBookApplication(Application):
         def _done(result):
             frame.centre()
             frame.show()
-
         frame = AddressBookFrame(run, None)
         frame.createRemote().addCallback(_done)

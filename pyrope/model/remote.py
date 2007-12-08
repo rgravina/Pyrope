@@ -121,6 +121,9 @@ class TextBoxReference(WindowReference):
 class ButtonReference(WindowReference):
     pass
 
+class CheckBoxReference(WindowReference):
+    pass
+
 class LabelReference(WindowReference):
     def remote_SetLabel(self, label):
         return self.widget.SetLabel(label)
@@ -199,6 +202,14 @@ class LabelBuilder(WidgetBuilder):
 class ButtonBuilder(WidgetBuilder):
     widgetClass = wx.Button
     referenceClass = ButtonReference
+
+class CheckBoxBuilder(WidgetBuilder):
+    widgetClass = wx.CheckBox
+    referenceClass = CheckBoxReference
+
+class ThreeStateCheckBoxBuilder(WidgetBuilder):
+    widgetClass = wx.CheckBox
+    referenceClass = CheckBoxReference
 
 class WidgetFactory(object):
     """A Factory that produces wxWidgets based on the class of the remote Pyrope widget passed to the constructor."""
