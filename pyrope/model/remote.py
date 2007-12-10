@@ -132,7 +132,7 @@ class WidgetBuilder(object):
     
     def createLocalReference(self, app, widgetData):
         #XXX: this will break if called from a WidgetBuilder instance!
-        if widgetData.styleData != None:
+        if widgetData.styleData:
             widgetData.constructorData["style"] = widgetData.styleData
         window = self.widgetClass(**widgetData.constructorData)
         localRef = self.referenceClass(app, window, widgetData.remoteWidgetReference, widgetData.eventHandlers)
