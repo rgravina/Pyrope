@@ -6,6 +6,7 @@ from twisted.python import log
 from twisted.internet.defer import inlineCallbacks
 from pyrope.model.shared import *
 from pyrope.model.remote import *
+from pyrope.model.decorators import *
 from pyrope.errors import RemoteResourceNotCreatedException
 
 class IApplication(Interface):
@@ -90,8 +91,6 @@ class Window(PyropeWidget):
         self.size = size
         #other props
         self.children = []
-        self._addedStyles = []
-        self._removedStyles = []
     def getConstructorDetails(self):
         """Creates an instance of WidgetConstructorDetails, with all the details the client needs to create 
         the client-side version of this widget"""
@@ -105,13 +104,12 @@ class Window(PyropeWidget):
         return d
     def _getOtherData(self):
         pass
-    def addStyle(self, style):
-        self._addedStyles.append(style)
     def _getStyleData(self):
-        style=0
-        for decorator in self._addedStyles:
-            style = style | decorator.toWxStyle()
-        return style
+        return None
+#        wxStyle=0
+        #TODO: avoid creating a new instance each time
+#        decorator = self.decoratorClass(self.styles)
+#        return decorator.toWxStyle()
     def _getEventHandlers(self):
         eventHandlers = []
         for event, fn in self.eventHandlers.items():
@@ -218,15 +216,30 @@ class Label(Window):
 #        d["title"] = self.title
 #        return d
 
-
 class Frame(Window):
     """A Pyrope Frame uses a wxPython SizedFrame on the client-side. This is so, at least for simple cases, programmers won't
-    need to deal with sizers so much."""
+    need to deal with sizers so much. Varies wxPython settings are exposed through the properties argument to the constructor."""
     type = "SizedFrame"
-    def __init__(self, run, parent, title=u"", position=DefaultPosition, size=DefaultSize, sizerType="horizontal"):
+    _props = {"minimise_box":wx.MINIMIZE_BOX,
+             "maximise_box":wx.MAXIMIZE_BOX,
+             "resize_border":wx.RESIZE_BORDER,
+             "system_menu":wx.SYSTEM_MENU,
+             "caption":wx.CAPTION,
+             "close_box":wx.CLOSE_BOX,
+             "resizeable":wx.RESIZE_BORDER}
+    def __init__(self, run, parent, title=u"", position=DefaultPosition, size=DefaultSize, sizerType="horizontal", properties={}):
         Window.__init__(self, run, parent, position=position, size=size)
         self.title = title
         self.sizerType = sizerType
+        self.properties = properties
+    def _getStyleData(self):
+        wxStyle=wx.DEFAULT_FRAME_STYLE
+        for prop, val in self.properties.items():
+            if val:
+                wxStyle = wxStyle | self._props[prop]
+            else: 
+                wxStyle = wxStyle ^ self._props[prop]
+        return wxStyle
     def _getConstructorData(self):
         d = Window._getConstructorData(self)
         d["title"] = self.title

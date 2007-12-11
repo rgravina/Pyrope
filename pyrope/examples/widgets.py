@@ -5,7 +5,7 @@ from twisted.internet.defer import inlineCallbacks
 
 class DemoFrame(Frame):
     def __init__(self, run, parent):
-        Frame.__init__(self, run, parent, title=u"Widget Demo", sizerType="vertical")
+        Frame.__init__(self, run, parent, title=u"Widget Demo", sizerType="vertical", properties={"minimise_box":False, "resizeable":False})
         self.text = TextBox(run, self, size=(250,-1), value=u"Enter some text.")
         self.text.bind(EventText, self.onText)
         self.label = Label(run, self, value=u"Widget Demo")
@@ -48,6 +48,5 @@ class WidgetsApplication(Application):
             
         #create a local representation of a frame
         frame = DemoFrame(run, None)
-#        frame.addStyle(BorderStyle(type="none"))
         #create the resource on client (to show it, call frame.show())
         frame.createRemote().addCallback(_done)
