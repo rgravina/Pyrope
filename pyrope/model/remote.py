@@ -107,14 +107,14 @@ class TopLevelWindowReference(WindowReference):
 class FrameReference(TopLevelWindowReference):
     pass
 
-class SizedFrameReference(TopLevelWindowReference):
-    pass
+#class SizedFrameReference(TopLevelWindowReference):
+#    pass
 
 class DialogReference(TopLevelWindowReference):
     pass
 
-class SizedPanelReference(WindowReference):
-    pass
+#class PanelReference(WindowReference):
+#    pass
 
 class LabelReference(WindowReference):
     def remote_SetLabel(self, label):
@@ -151,19 +151,19 @@ class TopLevelWindowBuilder(WidgetBuilder):
         app.topLevelWindows.append(localRef.widget)
         return localRef
 
-class FrameBuilder(TopLevelWindowBuilder):
-    widgetClass = wx.Frame
-    referenceClass = FrameReference
+#class FrameBuilder(TopLevelWindowBuilder):
+#    widgetClass = wx.Frame
+#    referenceClass = FrameReference
 
-class MiniFrameBuilder(TopLevelWindowBuilder):
-    widgetClass = wx.MiniFrame
-    referenceClass = FrameReference
+#class MiniFrameBuilder(TopLevelWindowBuilder):
+#    widgetClass = wx.MiniFrame
+#    referenceClass = FrameReference
+
+#class DialogBuilder(TopLevelWindowBuilder):
+#    widgetClass = wx.Dialog
+#    referenceClass = DialogReference
 
 class DialogBuilder(TopLevelWindowBuilder):
-    widgetClass = wx.Dialog
-    referenceClass = DialogReference
-
-class SizedDialogBuilder(TopLevelWindowBuilder):
     widgetClass = sc.SizedDialog
     referenceClass = DialogReference
 
@@ -171,22 +171,22 @@ class MessageDialogBuilder(TopLevelWindowBuilder):
     widgetClass = wx.MessageDialog
     referenceClass = DialogReference
 
-class SizedFrameBuilder(FrameBuilder):
+class FrameBuilder(TopLevelWindowBuilder):
     widgetClass = sc.SizedFrame
-    referenceClass = SizedFrameReference
+    referenceClass = FrameReference
     def createLocalReference(self, app, widgetData):
-        localRef = FrameBuilder.createLocalReference(self, app, widgetData)
-        panel = localRef.widget.GetContentsPane()
-        panel.SetSizerType(widgetData.otherData["sizerType"])
+        localRef = TopLevelWindowBuilder.createLocalReference(self, app, widgetData)
+        widget = localRef.widget.GetContentsPane()
+        widget.SetSizerType(widgetData.otherData["sizerType"])
         return localRef
 
-class SizedPanelBuilder(WidgetBuilder):
+class PanelBuilder(WidgetBuilder):
     widgetClass = sc.SizedPanel
-    referenceClass = SizedPanelReference
+    referenceClass = WindowReference
     def createLocalReference(self, app, widgetData):
         localRef = WidgetBuilder.createLocalReference(self, app, widgetData)
-        panel = localRef.widget
-        panel.SetSizerType(widgetData.otherData["sizerType"])
+        widget = localRef.widget
+        widget.SetSizerType(widgetData.otherData["sizerType"])
         return localRef
 
 class TextBoxBuilder(WidgetBuilder):
@@ -200,6 +200,12 @@ class LabelBuilder(WidgetBuilder):
 class ButtonBuilder(WidgetBuilder):
     widgetClass = wx.Button
     referenceClass = WindowReference
+    def createLocalReference(self, app, widgetData):
+        localRef = WidgetBuilder.createLocalReference(self, app, widgetData)
+        widget = localRef.widget
+        if widgetData.otherData["default"]:
+            widget.SetDefault()
+        return localRef
 
 class ChoiceBuilder(WidgetBuilder):
     widgetClass = wx.Choice
@@ -209,13 +215,32 @@ class CheckBoxBuilder(WidgetBuilder):
     widgetClass = wx.CheckBox
     referenceClass = WindowReference
 
-class ThreeStateCheckBoxBuilder(WidgetBuilder):
-    widgetClass = wx.CheckBox
-    referenceClass = WindowReference
-
 class GaugeBuilder(WidgetBuilder):
     widgetClass = wx.Gauge
     referenceClass = WindowReference
+    def createLocalReference(self, app, widgetData):
+        localRef = WidgetBuilder.createLocalReference(self, app, widgetData)
+        widget = localRef.widget
+        widget.SetValue(widgetData.otherData["value"])
+        return localRef
+
+class SliderBuilder(WidgetBuilder):
+    widgetClass = wx.Slider
+    referenceClass = WindowReference
+
+class ListBoxBuilder(WidgetBuilder):
+    widgetClass = wx.ListBox
+    referenceClass = WindowReference
+
+class SpinnerBuilder(WidgetBuilder):
+    widgetClass = wx.SpinCtrl
+    referenceClass = WindowReference
+    def createLocalReference(self, app, widgetData):
+        localRef = WidgetBuilder.createLocalReference(self, app, widgetData)
+        widget = localRef.widget
+        range = widgetData.otherData["range"]
+        widget.SetRange(range[0],range[1])
+        return localRef
 
 class WidgetFactory(object):
     """A Factory that produces wxWidgets based on the class of the remote Pyrope widget passed to the constructor."""

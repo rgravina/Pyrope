@@ -8,7 +8,7 @@ class AddressBookFrame(Frame):
 
         #left panel - list of address book entries
         leftPanel = Panel(run, self)
-        Label(run, leftPanel, value=u"TODO:\nlist\nof\nnames\nhere")
+        ListBox(run, leftPanel, choices=[u"Robert Gravina"])
 
         #right panel - address book entry form
         rightPanel = Panel(run, self, sizerType="form")

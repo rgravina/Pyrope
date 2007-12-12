@@ -91,6 +91,7 @@ class Window(PyropeWidget):
         self.size = size
         #other props
         self.children = []
+        self.wxStyle = 0
     def getConstructorDetails(self):
         """Creates an instance of WidgetConstructorDetails, with all the details the client needs to create 
         the client-side version of this widget"""
@@ -104,8 +105,16 @@ class Window(PyropeWidget):
         return d
     def _getOtherData(self):
         pass
+    def _addStyleToggle(self, attr, attrStr):
+        if attr:
+            self.wxStyle = self.wxStyle | self._props[attrStr]
+        else: 
+            self.wxStyle = self.wxStyle ^ self._props[attrStr]
+    def _addStyleVal(self, attr, attrStr):
+        if attr:
+            self.wxStyle = self.wxStyle | self._props[attrStr]
     def _getStyleData(self):
-        return None
+        return self.wxStyle
 #        wxStyle=0
         #TODO: avoid creating a new instance each time
 #        decorator = self.decoratorClass(self.styles)
@@ -149,48 +158,6 @@ class Window(PyropeWidget):
 #    #XXX: this doesn't work for setter!
 #    backgroundColour = property(GetBackgroundColour, SetBackgroundColour)
 
-#class BoxSizer(PyropeWidget):
-#    def __init__(self, app, handler, orientation):
-#        PyropeWidget.__init__(self, app, handler)
-#        self.orientation = orientation
-#        self.widgets = []
-#    def add(self, widget):
-#        self.widgets.append(widget)
-#pb.setUnjellyableForClass(BoxSizer, BoxSizer)
-#
-#class Panel(Window):
-#    def __init__(self, app, handler, parent, position=DefaultPosition, size=DefaultSize, style=wx.TAB_TRAVERSAL):
-#        Window.__init__(self, app, handler, parent, position=position, size=size, style=style)
-#pb.setUnjellyableForClass(Panel, Panel)
-
-class TextBox(Window):
-    type = "TextBox"
-    def __init__(self, run, parent, value=u"", position=DefaultPosition, size=DefaultSize):
-        Window.__init__(self, run, parent, position=position, size=size)
-        self.value = value
-    def _getConstructorData(self):
-        d = Window._getConstructorData(self)
-        d["value"] = self.value
-        return d
-    def handleEvent(self, event):
-        #TODO: check the event type, handle accordingly, throw exceptions if it can't handle it
-        self.value = event.data
-class Label(Window):
-    type = "Label"
-    def __init__(self, run, parent, value=u"", position=DefaultPosition, size=DefaultSize):
-        Window.__init__(self, run, parent, position=position, size=size)
-        self.label = value
-    def _getConstructorData(self):
-        d = Window._getConstructorData(self)
-        d["label"] = self.label
-        return d
-    def setValue(self, label):
-        #set the local background colour
-        self.label = label
-        #set remote
-        return self.callRemote("SetLabel", label)
-    def handleEvent(self, event):
-        self.label = event.data
 
 ######################
 # Frames and Dialogs #
@@ -219,27 +186,26 @@ class Label(Window):
 class Frame(Window):
     """A Pyrope Frame uses a wxPython SizedFrame on the client-side. This is so, at least for simple cases, programmers won't
     need to deal with sizers so much. Varies wxPython settings are exposed through the properties argument to the constructor."""
-    type = "SizedFrame"
-    _props = {"minimise_box":wx.MINIMIZE_BOX,
-             "maximise_box":wx.MAXIMIZE_BOX,
-             "resize_border":wx.RESIZE_BORDER,
-             "system_menu":wx.SYSTEM_MENU,
+    type = "Frame"
+    _props = {"minimiseBox":wx.MINIMIZE_BOX,
+             "maximiseBox":wx.MAXIMIZE_BOX,
+             "resizeBorder":wx.RESIZE_BORDER,
+             "systemMenu":wx.SYSTEM_MENU,
              "caption":wx.CAPTION,
-             "close_box":wx.CLOSE_BOX,
+             "closeBox":wx.CLOSE_BOX,
+             "stayOnTop":wx.STAY_ON_TOP,
              "resizeable":wx.RESIZE_BORDER}
-    def __init__(self, run, parent, title=u"", position=DefaultPosition, size=DefaultSize, sizerType="horizontal", properties={}):
+    def __init__(self, run, parent, title=u"", position=DefaultPosition, size=DefaultSize, sizerType="horizontal", 
+                 minimiseBox=True, maximiseBox=True, closeBox=True, stayOnTop=True, systemMenu=True, resizeable=True):
         Window.__init__(self, run, parent, position=position, size=size)
         self.title = title
         self.sizerType = sizerType
-        self.properties = properties
-    def _getStyleData(self):
-        wxStyle=wx.DEFAULT_FRAME_STYLE
-        for prop, val in self.properties.items():
-            if val:
-                wxStyle = wxStyle | self._props[prop]
-            else: 
-                wxStyle = wxStyle ^ self._props[prop]
-        return wxStyle
+        self.wxStyle = wx.DEFAULT_FRAME_STYLE
+        self._addStyleToggle(minimiseBox, "minimiseBox")
+        self._addStyleToggle(maximiseBox, "maximiseBox")
+        self._addStyleToggle(closeBox, "closeBox")
+        self._addStyleToggle(stayOnTop, "stayOnTop")
+        self._addStyleToggle(systemMenu, "systemMenu")
     def _getConstructorData(self):
         d = Window._getConstructorData(self)
         d["title"] = self.title
@@ -247,65 +213,139 @@ class Frame(Window):
     def _getOtherData(self):
         return {"sizerType":self.sizerType}
 
-class Dialog(Window):
-    type = "SizedDialog"
-    def __init__(self, run, parent, title=u"", position=DefaultPosition, size=DefaultSize):
-        Window.__init__(self, run, parent, position=position, size=size)
-        self.title = title
-    def _getConstructorData(self):
-        d = Window._getConstructorData(self)
-        d["title"] = self.title
-        return d
-    def showModal(self):
-        return self.callRemote("ShowModal")
-pb.setUnjellyableForClass(Dialog, Dialog)
+#class Dialog(Window):
+#    type = "SizedDialog"
+#    def __init__(self, run, parent, title=u"", position=DefaultPosition, size=DefaultSize):
+#        Window.__init__(self, run, parent, position=position, size=size)
+#        self.title = title
+#    def _getConstructorData(self):
+#        d = Window._getConstructorData(self)
+#        d["title"] = self.title
+#        return d
+#    def showModal(self):
+#        return self.callRemote("ShowModal")
+#pb.setUnjellyableForClass(Dialog, Dialog)
+#
+#class MessageDialog(Window):
+#    type = "MessageDialog"
+#    def __init__(self, run, parent, message, caption=u"Message Box", position=DefaultPosition):
+#        Window.__init__(self, run, parent, position=position)
+#        self.caption = caption
+#        self.message = message
+#    def _getConstructorData(self):
+#        d = Window._getConstructorData(self)
+#        d["caption"] = self.caption
+#        d["message"] = self.message
+#        #no size for message box
+#        del d["size"]
+#        return d
+#    def showModal(self):
+#        return self.callRemote("ShowModal")
+#pb.setUnjellyableForClass(MessageDialog, MessageDialog)
 
-class MessageDialog(Window):
-    type = "MessageDialog"
-    def __init__(self, run, parent, message, caption=u"Message Box", position=DefaultPosition):
-        Window.__init__(self, run, parent, position=position)
-        self.caption = caption
-        self.message = message
-    def _getConstructorData(self):
-        d = Window._getConstructorData(self)
-        d["caption"] = self.caption
-        d["message"] = self.message
-        #no size for message box
-        del d["size"]
-        return d
-    def showModal(self):
-        return self.callRemote("ShowModal")
-pb.setUnjellyableForClass(MessageDialog, MessageDialog)
-
-#########
-# Panel #
-#########
+##########
+## Panel #
+##########
 class Panel(Window):
-    type = "SizedPanel"
+    type = "Panel"
     def __init__(self, run, parent, position=DefaultPosition, size=DefaultSize, sizerType="vertical"):
         Window.__init__(self, run, parent, position=position, size=size)
         self.sizerType = sizerType
     def _getOtherData(self):
         return {"sizerType":self.sizerType}
+#
+############
+## Widgets #
+############
 
-###########
-# Widgets #
-###########
-class Button(Window):
-    type = "Button"
-    def __init__(self, run, parent, value=u""):
-        Window.__init__(self, run, parent)
+class TextBox(Window):
+    type = "TextBox"
+    _props = {"multiline":wx.TE_MULTILINE,
+              "readonly":wx.TE_READONLY,
+              "password":wx.TE_PASSWORD,
+              "left":wx.TE_LEFT,
+              "centre":wx.TE_CENTRE,
+              "right":wx.TE_RIGHT,
+              }
+    def __init__(self, run, parent, value=u"", position=DefaultPosition, size=DefaultSize,
+                 justification="left", multiline=False, readonly=False, password=False):
+        Window.__init__(self, run, parent, position=position, size=size)
+        self.value = value
+        self._addStyleVal(multiline, "multiline")
+        self._addStyleVal(readonly, "readonly")
+        self._addStyleVal(password, "password")
+        self._addStyleVal(justification == "left", "left")
+        self._addStyleVal(justification == "centre", "centre")
+        self._addStyleVal(justification == "right", "right")
+    def _getConstructorData(self):
+        d = Window._getConstructorData(self)
+        d["value"] = self.value
+        return d
+#    def handleEvent(self, event):
+#        #TODO: check the event type, handle accordingly, throw exceptions if it can't handle it
+#        self.value = event.data
+
+class Label(Window):
+    type = "Label"
+    _props = {"left":wx.ALIGN_LEFT,
+              "centre":wx.ALIGN_CENTRE,
+              "right":wx.ALIGN_RIGHT}
+    def __init__(self, run, parent, value=u"", position=DefaultPosition, size=DefaultSize,
+                 justification="left"):
+        Window.__init__(self, run, parent, position=position, size=size)
         self.label = value
+        self._addStyleVal(justification == "left", "left")
+        self._addStyleVal(justification == "centre", "centre")
+        self._addStyleVal(justification == "right", "right")
     def _getConstructorData(self):
         d = Window._getConstructorData(self)
         d["label"] = self.label
         return d
+#    def setValue(self, label):
+#        #set the local background colour
+#        self.label = label
+#        #set remote
+#        return self.callRemote("SetLabel", label)
+#    def handleEvent(self, event):
+#        self.label = event.data
+
+class Button(Window):
+    type = "Button"
+    def __init__(self, run, parent, value=u"",
+                 default=True):
+        Window.__init__(self, run, parent)
+        self.label = value
+        self.default = default
+    def _getConstructorData(self):
+        d = Window._getConstructorData(self)
+        d["label"] = self.label
+        return d
+    def _getOtherData(self):
+        return{"default":self.default}
 
 class Choice(Window):
     type = "Choice"
-    def __init__(self, run, parent, choices=u""):
+    _props = {"sortAlphabetically":wx.CB_SORT}
+    def __init__(self, run, parent, choices=[], 
+                 sortAlphabetically=False):
         Window.__init__(self, run, parent)
         self.choices = choices
+        self._addStyleVal(sortAlphabetically, "sortAlphabetically")
+    def _getConstructorData(self):
+        d = Window._getConstructorData(self)
+        d["choices"] = self.choices
+        return d
+
+class ListBox(Window):
+    type = "ListBox"
+    _props = {"sortAlphabetically":wx.LB_SORT,
+              "multipleSelection":wx.LB_MULTIPLE}
+    def __init__(self, run, parent, choices=[], 
+                 multipleSelection=False, sortAlphabetically=False):
+        Window.__init__(self, run, parent)
+        self.choices = choices
+        self._addStyleVal(sortAlphabetically, "sortAlphabetically")
+        self._addStyleVal(multipleSelection, "multipleSelection")
     def _getConstructorData(self):
         d = Window._getConstructorData(self)
         d["choices"] = self.choices
@@ -313,19 +353,16 @@ class Choice(Window):
 
 class CheckBox(Window):
     type = "CheckBox"
-    def __init__(self, run, parent, label=u"", position=DefaultPosition, size=DefaultSize):
+    _props = {"threeState":wx.CHK_3STATE,
+              "userCanSelectThirdState":wx.CHK_ALLOW_3RD_STATE_FOR_USER,
+              "alignRight":wx.ALIGN_RIGHT}
+    def __init__(self, run, parent, label=u"", position=DefaultPosition, size=DefaultSize,
+                 threeState=False, userCanSelectThirdState=False, alignRight=False):
         Window.__init__(self, run, parent, position=position, size=size)
         self.label = label
-    def _getConstructorData(self):
-        d = Window._getConstructorData(self)
-        d["label"] = self.label
-        return d
-
-class ThreeStateCheckBox(Window):
-    type = "CheckBox"
-    def __init__(self, run, parent, label=u"", position=DefaultPosition, size=DefaultSize):
-        Window.__init__(self, run, parent, position=position, size=size)
-        self.label = label
+        self._addStyleVal(threeState, "threeState")
+        self._addStyleVal(userCanSelectThirdState, "userCanSelectThirdState")
+        self._addStyleVal(alignRight, "alignRight")
     def _getConstructorData(self):
         d = Window._getConstructorData(self)
         d["label"] = self.label
@@ -333,10 +370,63 @@ class ThreeStateCheckBox(Window):
 
 class Gauge(Window):
     type = "Gauge"
-    def __init__(self, run, parent, range=100, position=DefaultPosition, size=DefaultSize):
+    _props = {"horizontal":wx.GA_HORIZONTAL,
+              "vertical":wx.GA_VERTICAL}
+    def __init__(self, run, parent, range=100, position=DefaultPosition, size=DefaultSize,
+                 value=0, alignment="horizontal"):
         Window.__init__(self, run, parent, position=position, size=size)
         self.range = range
+        self.value = value
+        self._addStyleVal(alignment == "horizontal", "horizontal")
+        self._addStyleVal(alignment == "vertical", "vertical")
     def _getConstructorData(self):
         d = Window._getConstructorData(self)
         d["range"] = self.range
         return d
+    def _getOtherData(self):
+        return {"value":self.value}
+
+class Slider(Window):
+    type = "Slider"
+    _props = {"horizontal":wx.SL_HORIZONTAL,
+              "vertical":wx.SL_VERTICAL,
+              "displayTicks":wx.SL_AUTOTICKS,
+              "displayLabels":wx.SL_LABELS,
+              "left":wx.SL_LEFT,
+              "right":wx.SL_RIGHT,
+              "top":wx.SL_TOP,
+              "bottom":wx.SL_BOTTOM}
+    def __init__(self, run, parent, minValue=0, maxValue=100, position=DefaultPosition, size=DefaultSize,
+                 alignment="horizontal", displayLabels=False, displayTicks=False, tickPosition="bottom"):
+        Window.__init__(self, run, parent, position=position, size=size)
+        self.minValue = minValue
+        self.maxValue = maxValue
+        self._addStyleVal(displayLabels, "displayLabels")
+        self._addStyleVal(displayTicks, "displayTicks")
+        self._addStyleVal(alignment == "horizontal", "horizontal")
+        self._addStyleVal(alignment == "vertical", "vertical")
+        self._addStyleVal(tickPosition == "bottom", "bottom")
+        self._addStyleVal(tickPosition == "top", "top")
+        self._addStyleVal(tickPosition == "left", "left")
+        self._addStyleVal(tickPosition == "right", "right")        
+    def _getConstructorData(self):
+        d = Window._getConstructorData(self)
+        d["minValue"] = self.minValue
+        d["maxValue"] = self.maxValue
+        return d
+
+class Spinner(Window):
+    type = "Spinner"
+    _props = {"wrap":wx.SP_WRAP}
+    def __init__(self, run, parent, value=u"0", range=(0,10), 
+                 wrap=False):
+        Window.__init__(self, run, parent)
+        self.value = value
+        self.range = range
+        self._addStyleVal(wrap, "wrap")
+    def _getConstructorData(self):
+        d = Window._getConstructorData(self)
+        d["value"] = self.value
+        return d
+    def _getOtherData(self):
+        return {"range":self.range}

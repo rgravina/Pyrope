@@ -5,35 +5,48 @@ from twisted.internet.defer import inlineCallbacks
 
 class DemoFrame(Frame):
     def __init__(self, run, parent):
-        Frame.__init__(self, run, parent, title=u"Widget Demo", sizerType="vertical", properties={"minimise_box":False, "resizeable":False})
-        self.text = TextBox(run, self, size=(250,-1), value=u"Enter some text.")
-        self.text.bind(EventText, self.onText)
-        self.label = Label(run, self, value=u"Widget Demo")
-        self.button = Button(run, self, value=u"Click Me!")
-        self.button.bind(EventButton, self.onButton)
-        self.bind(EventClose, self.onClose)
+        Frame.__init__(self, run, parent, title=u"Widget Demo", sizerType="vertical", minimiseBox=False)
+        
+        topPanel = Panel(run, self, sizerType="horizontal")
+        lhsPanel = Panel(run, topPanel, sizerType="vertical")
 
-        checkBox = CheckBox(run, self, label=u"genki?")
-        checkBoxThree = ThreeStateCheckBox(run, self, label=u"genki?")
-        choice = Choice(run, self, choices=["one","two","three"])
-        #TOOO: use expanded sizer on sized frame
-        gauge = Gauge(run, self, size=(200,1))
+        self.text = TextBox(run, lhsPanel, value=u"Enter some text.")
+#        self.text.bind(EventText, self.onText)
+        self.label = Label(run, lhsPanel, value=u"Widget Demo")
+        button = Button(run, lhsPanel, value=u"Cancel")
+        self.button = Button(run, lhsPanel, value=u"OK", default=True)
+#        self.button.bind(EventButton, self.onButton)
+#        self.bind(EventClose, self.onClose)
 
-    def onText(self, event):
-        self.label.setValue(event.widget.value)
+        checkBox = CheckBox(run, lhsPanel, label=u"two states", alignRight=True)
+        checkBoxThree = CheckBox(run, lhsPanel, label=u"three states", threeState=True, userCanSelectThirdState=True)
+        choice = Choice(run, lhsPanel, choices=["one","two","three"])
 
-    def onButton(self, event):
-        self.label.setValue("Clicked button!")
+        rhsPanel = Panel(run, topPanel, sizerType="vertical")
+        
+        gauge = Gauge(run, rhsPanel, size=(200,-1), value=30)
+        slider = Slider(run, rhsPanel, displayLabels=True)
+        lb = ListBox(run, rhsPanel, choices=["one","two","three"])
+        spinner = Spinner(run, rhsPanel, wrap=True)
 
-    def onClose(self, event):
-        def _done(result):
-            def _done(result):
-                dlg.destroy()
-                if result == wx.ID_OK:
-                    self.destroy()
-            dlg.showModal().addCallback(_done)
-        dlg = MessageDialog(self.run, self, u"Are you sure you want to quit Widget Demo?", caption=u"Quit Widget Demo?")
-        dlg.createRemote().addCallback(_done)
+        bottomPanel = Panel(run, self, sizerType="vertical")
+        output = TextBox(run, bottomPanel, value=u"Widget ouput...", size=(400,100), readonly=True, multiline=True)
+
+#    def onText(self, event):
+#        self.label.setValue(event.widget.value)
+#
+#    def onButton(self, event):
+#        self.label.setValue("Clicked button!")
+#
+#    def onClose(self, event):
+#        def _done(result):
+#            def _done(result):
+#                dlg.destroy()
+#                if result == wx.ID_OK:
+#                    self.destroy()
+#            dlg.showModal().addCallback(_done)
+#        dlg = MessageDialog(self.run, self, u"Are you sure you want to quit Widget Demo?", caption=u"Quit Widget Demo?")
+#        dlg.createRemote().addCallback(_done)
     
 class WidgetsApplication(Application):
     def __init__(self):
