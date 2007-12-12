@@ -29,6 +29,9 @@ class DemoFrame(Frame):
         lb = ListBox(run, rhsPanel, choices=["one","two","three"])
         spinner = Spinner(run, rhsPanel, wrap=True)
 
+        rhsPanel2 = Panel(run, topPanel, sizerType="vertical")
+        radioBox = RadioBox(run, rhsPanel2, label=u"Radio Box!", choices=["one","two","three", "four", "five", "six"], cols=2)
+
         bottomPanel = Panel(run, self, sizerType="vertical")
         output = TextBox(run, bottomPanel, value=u"Widget ouput...", size=(400,100), readonly=True, multiline=True)
 

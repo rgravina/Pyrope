@@ -242,6 +242,10 @@ class SpinnerBuilder(WidgetBuilder):
         widget.SetRange(range[0],range[1])
         return localRef
 
+class RadioBoxBuilder(WidgetBuilder):
+    widgetClass = wx.RadioBox
+    referenceClass = WindowReference
+
 class WidgetFactory(object):
     """A Factory that produces wxWidgets based on the class of the remote Pyrope widget passed to the constructor."""
     @classmethod

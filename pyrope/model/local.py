@@ -430,3 +430,27 @@ class Spinner(Window):
         return d
     def _getOtherData(self):
         return {"range":self.range}
+
+class RadioBox(Window):
+    type = "RadioBox"
+    _props = {"rows":wx.RA_SPECIFY_ROWS,
+              "cols":wx.RA_SPECIFY_COLS}
+    def __init__(self, run, parent, label=u"", choices=[], cols=0, rows=0):
+        Window.__init__(self, run, parent)
+        self.label = label
+        self.choices = choices
+        #if rows=0, assume cols is used:
+        self.cols = cols
+        self.rows = rows
+        #default is cols, so no need to check for that
+        if rows:
+            self._addStyleVal(rows, "rows")
+    def _getConstructorData(self):
+        d = Window._getConstructorData(self)
+        d["label"] = self.label
+        d["choices"] = self.choices
+        if not self.rows:
+            d["majorDimension"] = self.cols
+        else:
+            d["majorDimension"] = self.rows
+        return d
