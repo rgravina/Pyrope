@@ -232,6 +232,10 @@ class ListBoxBuilder(WidgetBuilder):
     widgetClass = wx.ListBox
     referenceClass = WindowReference
 
+class CheckListBoxBuilder(WidgetBuilder):
+    widgetClass = wx.CheckListBox
+    referenceClass = WindowReference
+
 class SpinnerBuilder(WidgetBuilder):
     widgetClass = wx.SpinCtrl
     referenceClass = WindowReference

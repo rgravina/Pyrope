@@ -351,6 +351,9 @@ class ListBox(Window):
         d["choices"] = self.choices
         return d
 
+class CheckListBox(ListBox):
+    type = "CheckListBox"
+
 class CheckBox(Window):
     type = "CheckBox"
     _props = {"threeState":wx.CHK_3STATE,

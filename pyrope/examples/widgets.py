@@ -27,6 +27,7 @@ class DemoFrame(Frame):
         gauge = Gauge(run, rhsPanel, size=(200,-1), value=30)
         slider = Slider(run, rhsPanel, displayLabels=True)
         lb = ListBox(run, rhsPanel, choices=["one","two","three"])
+        clb = CheckListBox(run, rhsPanel, choices=["one","two","three"])
         spinner = Spinner(run, rhsPanel, wrap=True)
 
         rhsPanel2 = Panel(run, topPanel, sizerType="vertical")
