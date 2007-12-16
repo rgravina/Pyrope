@@ -6,7 +6,7 @@ from twisted.python import log
 from twisted.internet.defer import inlineCallbacks
 from pyrope.model.shared import *
 from pyrope.model.remote import *
-from pyrope.model.decorators import *
+from pyrope.model.events import *
 from pyrope.errors import RemoteResourceNotCreatedException
 
 class IApplication(Interface):
@@ -69,7 +69,7 @@ class PyropeWidget(pb.Referenceable):
         else:
             raise RemoteResourceNotCreatedException, "You must call createRemote before calling this method"
     def bind(self, event, handlerFunction):
-        self.eventHandlers[event] = handlerFunction
+        self.eventHandlers[event.type] = handlerFunction
     def remote_handleEvent(self, event):
         """Called by client when an event has been fired. """
         #update local cached data
@@ -457,3 +457,23 @@ class RadioBox(Window):
         else:
             d["majorDimension"] = self.rows
         return d
+
+class Box(Window):
+    type = "Box"
+    def __init__(self, run, parent, label=u"", position=DefaultPosition, size=DefaultSize):
+        Window.__init__(self, run, parent, position=position, size=size)
+        self.label = label
+    def _getConstructorData(self):
+        d = Window._getConstructorData(self)
+        d["label"] = self.label
+        return d
+
+class Line(Window):
+    type = "Line"
+    _props = {"horizontal":wx.LI_HORIZONTAL,
+              "vertical":wx.LI_VERTICAL}
+    def __init__(self, run, parent, position=DefaultPosition, size=DefaultSize,
+                 orientation="horizontal"):
+        Window.__init__(self, run, parent, position=position, size=size)
+        self._addStyleVal(orientation == "horizontal", "horizontal")
+        self._addStyleVal(orientation == "vertical", "vertical")

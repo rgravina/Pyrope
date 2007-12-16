@@ -1,10 +1,11 @@
 """The Remote (i.e. usually client-side) model."""
 import wx
 import wxaddons.sized_controls as sc
-from twisted.spread import pb
 from twisted.python import log
 from twisted.spread.flavors import NoSuchMethod
 from pyrope.model.shared import *
+from pyrope.model.events import *
+
 from zope.interface import Interface, Attribute, implements
 
 class RemoteApplication(pb.Copyable, pb.RemoteCopy):
@@ -27,14 +28,6 @@ class WidgetConstructorDetails(pb.Copyable, pb.RemoteCopy):
         self.children = children
         self.eventHandlers = eventHandlers
 pb.setUnjellyableForClass(WidgetConstructorDetails, WidgetConstructorDetails)
-
-class Event(pb.Copyable, pb.RemoteCopy):
-    """Describes a client-side event. Data argument to constructor is optional (some events like a button click don't really have any data associated with them."""
-    def __init__(self, widget, eventType, data=None):
-        self.widget = widget
-        self.eventType = eventType
-        self.data = data
-pb.setUnjellyableForClass(Event, Event)
 
 class PyropeReferenceable(pb.Referenceable):
     """Subclasses pb.Referenceable so that it calls self.widget.somemethod when remote_somemethod connot be found.
@@ -64,26 +57,21 @@ class WindowReference(PyropeReferenceable):
         self.remote = remote     #server-side Pyrope widget refernce  
         self.boundEvents = []    #bound Pyrope events, e.g. EventClose
         for event in handlers:
-            self.boundEvents.append(event)
-            self.widget.Bind(events[event], self.handleEvent)            
+            eventClass = eval(event)
+            self.boundEvents.append(eventClass)
+            self.widget.Bind(eventClass.wxEventClass, self.handleEvent)            
     def remote_Destroy(self):
         self._destroy()
     def _destroy(self):
         self.widget.Destroy()
     def onClose(self, event):
-        if EventClose in self.boundEvents:
+        if CloseEvent in self.boundEvents:
             self.handleEvent(event)
         else:
             #if the programmer hasnt handled the close event specifically, then the default behaviour is to close the form
             self._destroy()
     def handleEvent(self, event):
-        #XXX:fixme
-        if event.GetEventType() == wx.EVT_CLOSE.typeId:
-            eventData = Event(self.remote, EventClose)
-        elif event.GetEventType() == wx.EVT_BUTTON.typeId:
-            eventData = Event(self.remote, EventButton)
-        elif event.GetEventType() == wx.EVT_TEXT.typeId:
-            eventData = Event(self.remote, EventText, self.widget.GetValue())
+        eventData = EventFactory.create(self.remote, event)
         self.remote.callRemote("handleEvent", eventData)
     def remote_Centre(self, direction, centreOnScreen): 
         dir = direction
@@ -248,6 +236,14 @@ class SpinnerBuilder(WidgetBuilder):
 
 class RadioBoxBuilder(WidgetBuilder):
     widgetClass = wx.RadioBox
+    referenceClass = WindowReference
+
+class BoxBuilder(WidgetBuilder):
+    widgetClass = wx.StaticBox
+    referenceClass = WindowReference
+
+class LineBuilder(WidgetBuilder):
+    widgetClass = wx.StaticLine
     referenceClass = WindowReference
 
 class WidgetFactory(object):

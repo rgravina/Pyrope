@@ -27,5 +27,5 @@ DefaultPosition = DefaultSize = (-1,-1)
 #             ThickFrame:wx.THICK_FRAME, No3D:wx.NO_3D, DialogNoParent:wx.DIALOG_NO_PARENT, DialogExContextHelp:wx.DIALOG_EX_CONTEXTHELP, DialogExMetal:wx.DIALOG_EX_METAL}
 #
 
-EventClose, EventText, EventButton = range(3)
-events = {EventClose:wx.EVT_CLOSE, EventText:wx.EVT_TEXT, EventButton:wx.EVT_BUTTON}
+#EventClose, EventText, EventButton = range(3)
+#events = {EventClose:wx.EVT_CLOSE, EventText:wx.EVT_TEXT, EventButton:wx.EVT_BUTTON}

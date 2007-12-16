@@ -13,9 +13,9 @@ class AddressBookFrame(Frame):
         #right panel - address book entry form
         rightPanel = Panel(run, self, sizerType="form")
         Label(run, rightPanel, value=u"Name")
-        TextBox(run, rightPanel, value=u"Robert Gravina", size=(200,-1))
+        TextBox(run, rightPanel, value=u"Robert Gravina")
         Label(run, rightPanel, value=u"Email")
-        TextBox(run, rightPanel, value=u"robert@gravina.com", size=(200,-1))
+        TextBox(run, rightPanel, value=u"robert@gravina.com")
 
 class AddressBookApplication(Application):
     def __init__(self):

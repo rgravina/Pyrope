@@ -1,6 +1,6 @@
 from pyrope.server import Application
 from pyrope.model import *
-from pyrope.model.decorators import *
+from pyrope.model.events import *
 from twisted.internet.defer import inlineCallbacks
 
 class DemoFrame(Frame):
@@ -15,7 +15,7 @@ class DemoFrame(Frame):
         self.label = Label(run, lhsPanel, value=u"Widget Demo")
         button = Button(run, lhsPanel, value=u"Cancel")
         self.button = Button(run, lhsPanel, value=u"OK", default=True)
-#        self.button.bind(EventButton, self.onButton)
+        self.button.bind(ButtonEvent, self.onButton)
 #        self.bind(EventClose, self.onClose)
 
         checkBox = CheckBox(run, lhsPanel, label=u"two states", alignRight=True)
@@ -28,9 +28,11 @@ class DemoFrame(Frame):
         slider = Slider(run, rhsPanel, displayLabels=True)
         lb = ListBox(run, rhsPanel, choices=["one","two","three"])
         clb = CheckListBox(run, rhsPanel, choices=["one","two","three"])
-        spinner = Spinner(run, rhsPanel, wrap=True)
 
         rhsPanel2 = Panel(run, topPanel, sizerType="vertical")
+        box = Box(run, rhsPanel2, label=u"A box")
+        spinner = Spinner(run, rhsPanel2, wrap=True)
+        line = Line(run, rhsPanel2, size=(200,-1))
         radioBox = RadioBox(run, rhsPanel2, label=u"Radio Box!", choices=["one","two","three", "four", "five", "six"], cols=2)
 
         bottomPanel = Panel(run, self, sizerType="vertical")
@@ -39,7 +41,8 @@ class DemoFrame(Frame):
 #    def onText(self, event):
 #        self.label.setValue(event.widget.value)
 #
-#    def onButton(self, event):
+    def onButton(self, event):
+        print "button click event"
 #        self.label.setValue("Clicked button!")
 #
 #    def onClose(self, event):
