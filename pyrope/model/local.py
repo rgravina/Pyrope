@@ -69,14 +69,17 @@ class PyropeWidget(pb.Referenceable):
         else:
             raise RemoteResourceNotCreatedException, "You must call createRemote before calling this method"
     def bind(self, event, handlerFunction):
-        self.eventHandlers[event.type] = handlerFunction
+        self.eventHandlers[event] = handlerFunction
     def remote_handleEvent(self, event):
         """Called by client when an event has been fired. """
         #update local cached data
-        event.widget.handleEvent(event)
+#        event.widget.handleEvent(event)
         #call event handler
         #TODO: support multiple handlers
         self.eventHandlers[event.eventType](event)
+    def remote_updateData(self, data):
+        #update local cached data
+        self.updateData(data)
     def remote_updateRemote(self, remote):
         self.remote = remote
 
@@ -122,16 +125,18 @@ class Window(PyropeWidget):
     def _getEventHandlers(self):
         eventHandlers = []
         for event, fn in self.eventHandlers.items():
-            eventHandlers.append(event)
+            eventHandlers.append(event.type)
         return eventHandlers
     def _getChildren(self):
         children = []
         for child in self.children:
             children.append(child.getConstructorDetails())
         return children
-    def handleEvent(self, event):
-        """Default response to an event is to ignore it. Implement useful behaviour in subsclasses (e.g. for TextBox, on a EventText, update the textboxes value attribute)"""
-        pass
+#    def handleEvent(self, event):
+#        """Default response to an event is to ignore it. Implement useful behaviour in subsclasses (e.g. for TextBox, on a EventText, update the textboxes value attribute)"""
+#        pass
+#    def updateData(self, data):
+#        pass
     def clientToScreen(self, point):
         return self.callRemote("ClientToScreen", point)
     def hide(self):
@@ -281,10 +286,18 @@ class TextBox(Window):
         d = Window._getConstructorData(self)
         d["value"] = self.value
         return d
+    def syncWithRemote(self):
+        def _done(data):
+            self.value = data
+        return self.callRemote("getData").addCallback(_done)
+    def syncWithLocal(self):
+        return self.callRemote("setData", self.value)
 #    def handleEvent(self, event):
 #        #TODO: check the event type, handle accordingly, throw exceptions if it can't handle it
 #        self.value = event.data
-
+#    def updateData(self, data):
+#        #TODO: check the event type, handle accordingly, throw exceptions if it can't handle it
+#        self.value = data
 class Label(Window):
     type = "Label"
     _props = {"left":wx.ALIGN_LEFT,
@@ -301,6 +314,12 @@ class Label(Window):
         d = Window._getConstructorData(self)
         d["label"] = self.label
         return d
+    def syncWithRemote(self):
+        def _done(data):
+            self.label = data
+        return self.callRemote("getData").addCallback(_done)
+    def syncWithLocal(self):
+        return self.callRemote("setData", self.label)
 #    def setValue(self, label):
 #        #set the local background colour
 #        self.label = label

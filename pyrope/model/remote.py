@@ -104,10 +104,20 @@ class DialogReference(TopLevelWindowReference):
 #class PanelReference(WindowReference):
 #    pass
 
-class LabelReference(WindowReference):
-    def remote_SetLabel(self, label):
-        return self.widget.SetLabel(label)
+class TextBoxReference(WindowReference):
+    def remote_getData(self):
+        return self.widget.GetValue()
+    def remote_setData(self, data):
+        return self.widget.SetValue(data)
+#    def onText(self, event):
+#        self.remote.callRemote("updateData", self.widget.GetValue())
 
+class LabelReference(WindowReference):
+    def remote_getData(self):
+        return self.widget.GetLabel()
+    def remote_setData(self, data):
+        return self.widget.SetLabel(data)
+#
 class WidgetBuilder(object):
     def replaceParent(self, app, widgetData):
         parent = widgetData.constructorData["parent"]
@@ -179,7 +189,11 @@ class PanelBuilder(WidgetBuilder):
 
 class TextBoxBuilder(WidgetBuilder):
     widgetClass = wx.TextCtrl
-    referenceClass = WindowReference
+    referenceClass = TextBoxReference
+#    def createLocalReference(self, app, widgetData):
+#        localRef = WidgetBuilder.createLocalReference(self, app, widgetData)
+#        localRef.widget.Bind(wx.EVT_TEXT, localRef.onText)
+#        return localRef
 
 class LabelBuilder(WidgetBuilder):
     widgetClass = wx.StaticText
