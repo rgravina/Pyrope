@@ -137,6 +137,12 @@ class Window(PyropeWidget):
 #        pass
 #    def updateData(self, data):
 #        pass
+    def syncWithRemote(self):
+        def _done(data):
+            self.setData(data)
+        return self.callRemote("getData").addCallback(_done)
+    def syncWithLocal(self):
+        return self.callRemote("setData", self.getData())
     def clientToScreen(self, point):
         return self.callRemote("ClientToScreen", point)
     def hide(self):
@@ -286,12 +292,10 @@ class TextBox(Window):
         d = Window._getConstructorData(self)
         d["value"] = self.value
         return d
-    def syncWithRemote(self):
-        def _done(data):
-            self.value = data
-        return self.callRemote("getData").addCallback(_done)
-    def syncWithLocal(self):
-        return self.callRemote("setData", self.value)
+    def setData(self, data):
+        self.value = data
+    def getData(self):
+        return self.value
 #    def handleEvent(self, event):
 #        #TODO: check the event type, handle accordingly, throw exceptions if it can't handle it
 #        self.value = event.data
@@ -314,12 +318,10 @@ class Label(Window):
         d = Window._getConstructorData(self)
         d["label"] = self.label
         return d
-    def syncWithRemote(self):
-        def _done(data):
-            self.label = data
-        return self.callRemote("getData").addCallback(_done)
-    def syncWithLocal(self):
-        return self.callRemote("setData", self.label)
+    def setData(self, data):
+        self.label = data
+    def getData(self):
+        return self.label
 #    def setValue(self, label):
 #        #set the local background colour
 #        self.label = label
@@ -350,10 +352,15 @@ class Choice(Window):
         Window.__init__(self, run, parent)
         self.choices = choices
         self._addStyleVal(sortAlphabetically, "sortAlphabetically")
+        self.selectedIndex = 0
     def _getConstructorData(self):
         d = Window._getConstructorData(self)
         d["choices"] = self.choices
         return d
+    def setData(self, data):
+        self.selectedIndex = data
+    def getData(self):
+        return self.choices
 
 class ListBox(Window):
     type = "ListBox"
@@ -369,6 +376,10 @@ class ListBox(Window):
         d = Window._getConstructorData(self)
         d["choices"] = self.choices
         return d
+    def setData(self, data):
+        self.selectedIndex = data
+    def getData(self):
+        return self.choices
 
 class CheckListBox(ListBox):
     type = "CheckListBox"

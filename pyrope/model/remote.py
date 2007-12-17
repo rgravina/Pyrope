@@ -117,7 +117,16 @@ class LabelReference(WindowReference):
         return self.widget.GetLabel()
     def remote_setData(self, data):
         return self.widget.SetLabel(data)
-#
+
+class ControlWithItemsReference(WindowReference):
+    def remote_getData(self):
+        return self.widget.GetSelection()
+    def remote_setData(self, data):
+        self.widget.Clear()
+        for item in data:
+            self.widget.Append(item)
+        self.widget.Update()
+
 class WidgetBuilder(object):
     def replaceParent(self, app, widgetData):
         parent = widgetData.constructorData["parent"]
@@ -211,7 +220,7 @@ class ButtonBuilder(WidgetBuilder):
 
 class ChoiceBuilder(WidgetBuilder):
     widgetClass = wx.Choice
-    referenceClass = WindowReference
+    referenceClass = ControlWithItemsReference
 
 class CheckBoxBuilder(WidgetBuilder):
     widgetClass = wx.CheckBox
@@ -232,7 +241,7 @@ class SliderBuilder(WidgetBuilder):
 
 class ListBoxBuilder(WidgetBuilder):
     widgetClass = wx.ListBox
-    referenceClass = WindowReference
+    referenceClass = ControlWithItemsReference
 
 class CheckListBoxBuilder(WidgetBuilder):
     widgetClass = wx.CheckListBox

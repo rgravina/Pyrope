@@ -21,13 +21,13 @@ class DemoFrame(Frame):
 
         checkBox = CheckBox(run, lhsPanel, label=u"two states", alignRight=True)
         checkBoxThree = CheckBox(run, lhsPanel, label=u"three states", threeState=True, userCanSelectThirdState=True)
-        choice = Choice(run, lhsPanel, choices=["one","two","three"])
+        self.choice = Choice(run, lhsPanel, choices=["one","two","three"])
 
         rhsPanel = Panel(run, topPanel, sizerType="vertical")
         
         gauge = Gauge(run, rhsPanel, size=(200,-1), value=30)
         slider = Slider(run, rhsPanel, displayLabels=True)
-        lb = ListBox(run, rhsPanel, choices=["one","two","three"])
+        self.lb = ListBox(run, rhsPanel, choices=["one","two","three"])
         clb = CheckListBox(run, rhsPanel, choices=["one","two","three"])
 
         rhsPanel2 = Panel(run, topPanel, sizerType="vertical")
@@ -48,12 +48,16 @@ class DemoFrame(Frame):
     def onOKButton(self, event):
         def _done(result):
             self.text.value = u"Clicked OK!"
+            self.lb.choices = ["1","2","3"]
             self.text.syncWithLocal()
+            self.lb.syncWithLocal()
         self.text.syncWithRemote().addCallback(_done)
 
     def onCancelButton(self, event):
         self.text.value = u"Clicked Cancel!"
+        self.lb.choices = ["one","two","three"]
         self.text.syncWithLocal()
+        self.lb.syncWithLocal()
 
 #    def onClose(self, event):
 #        def _done(result):
