@@ -118,6 +118,18 @@ class LabelReference(WindowReference):
     def remote_setData(self, data):
         return self.widget.SetLabel(data)
 
+class SliderReference(WindowReference):
+    def remote_getData(self):
+        return self.widget.GetValue()
+    def remote_setData(self, data):
+        return self.widget.SetValue(data)
+
+class GaugeReference(WindowReference):
+    def remote_getData(self):
+        return self.widget.GetValue()
+    def remote_setData(self, data):
+        return self.widget.SetValue(data)
+
 class ControlWithItemsReference(WindowReference):
     def remote_getData(self):
         return self.widget.GetSelection()
@@ -127,6 +139,18 @@ class ControlWithItemsReference(WindowReference):
             self.widget.Append(item)
         self.widget.Update()
 
+class MenuBarReference(WindowReference):
+    def onMenu(self, event):
+        print "item selected"
+        print event.GetEventObject()
+
+class MenuItemReference(object):
+    def __init__(self, menuBarRef, widget):
+        self.menuBarRef = menuBarRef
+        self.widget = widget
+    def onMenu(self, event):
+        self.menuBarRef.remote.callRemote("menuItemSelected", self.widget.GetId())
+        
 class WidgetBuilder(object):
     def replaceParent(self, app, widgetData):
         parent = widgetData.constructorData["parent"]
@@ -185,6 +209,12 @@ class FrameBuilder(TopLevelWindowBuilder):
         localRef = TopLevelWindowBuilder.createLocalReference(self, app, widgetData)
         widget = localRef.widget.GetContentsPane()
         widget.SetSizerType(widgetData.otherData["sizerType"])
+        #create menus
+        menuData = widgetData.otherData["menuBar"]
+        if menuData:
+            menuBarRef = WidgetFactory.create(app, menuData)
+            menuData.remoteWidgetReference.callRemote("updateRemote", menuBarRef)
+            localRef.widget.SetMenuBar(menuBarRef.widget)
         return localRef
 
 class PanelBuilder(WidgetBuilder):
@@ -228,7 +258,7 @@ class CheckBoxBuilder(WidgetBuilder):
 
 class GaugeBuilder(WidgetBuilder):
     widgetClass = wx.Gauge
-    referenceClass = WindowReference
+    referenceClass = GaugeReference
     def createLocalReference(self, app, widgetData):
         localRef = WidgetBuilder.createLocalReference(self, app, widgetData)
         widget = localRef.widget
@@ -237,7 +267,7 @@ class GaugeBuilder(WidgetBuilder):
 
 class SliderBuilder(WidgetBuilder):
     widgetClass = wx.Slider
-    referenceClass = WindowReference
+    referenceClass = SliderReference
 
 class ListBoxBuilder(WidgetBuilder):
     widgetClass = wx.ListBox
@@ -268,6 +298,27 @@ class BoxBuilder(WidgetBuilder):
 class LineBuilder(WidgetBuilder):
     widgetClass = wx.StaticLine
     referenceClass = WindowReference
+
+class MenuBarBuilder(WidgetBuilder):
+    widgetClass = wx.MenuBar
+    referenceClass = MenuBarReference
+    def replaceParent(self, app, widgetData):
+        pass
+    def createLocalReference(self, app, widgetData):
+        menuBar = self.widgetClass(**widgetData.constructorData)
+        localRef = self.referenceClass(app, menuBar, widgetData.remoteWidgetReference, widgetData.eventHandlers)
+        app.widgets[widgetData.remoteWidgetReference] = localRef.widget
+        #create menus
+        for menu in widgetData.otherData["menus"]:
+            wxMenu = wx.Menu()
+            for item in menu.items:
+                form = app.widgets[widgetData.otherData["form"]]
+                wxMenuItem = wx.MenuItem(wxMenu, item.id, item.text, item.help)
+                itemRef = MenuItemReference(localRef, wxMenuItem)
+                wx.EVT_MENU(form, item.id, itemRef.onMenu)
+                wxMenu.AppendItem(wxMenuItem)
+            menuBar.Append(wxMenu, menu.title)
+        return localRef
 
 class WidgetFactory(object):
     """A Factory that produces wxWidgets based on the class of the remote Pyrope widget passed to the constructor."""

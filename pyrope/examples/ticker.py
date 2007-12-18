@@ -28,8 +28,14 @@ class TickerFrame(Frame):
         now = datetime.datetime.now()
         diff = self.dueDate - now
         hours = diff.seconds / 3600 #secs in one hour
-        mins = ((diff.seconds % (hours*3600) / 60)) #secs in one min
-        secs = ((diff.seconds % (hours*3600+mins*60)))
+        if hours:
+            mins = ((diff.seconds % (hours*3600) / 60)) #secs in one min
+        else:
+            mins = diff.seconds / 60 #secs in one min
+        if hours or mins:
+            secs = ((diff.seconds % (hours*3600+mins*60)))
+        else:
+            secs = diff.seconds
         diffStr = "%d days, %d hours %d mins %d secs" % (diff.days, hours, mins, secs)
         return diffStr
     

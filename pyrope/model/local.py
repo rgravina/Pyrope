@@ -217,12 +217,18 @@ class Frame(Window):
         self._addStyleToggle(closeBox, "closeBox")
         self._addStyleToggle(stayOnTop, "stayOnTop")
         self._addStyleToggle(systemMenu, "systemMenu")
+        self.menuBar = None
     def _getConstructorData(self):
         d = Window._getConstructorData(self)
         d["title"] = self.title
         return d
     def _getOtherData(self):
-        return {"sizerType":self.sizerType}
+        data = {"sizerType":self.sizerType}
+        if self.menuBar:
+            data["menuBar"] = self.menuBar.getConstructorDetails()
+        else:
+            data["menuBar"] = None
+        return data
 
 #class Dialog(Window):
 #    type = "SizedDialog"
@@ -264,7 +270,7 @@ class Panel(Window):
         self.sizerType = sizerType
     def _getOtherData(self):
         return {"sizerType":self.sizerType}
-#
+
 ############
 ## Widgets #
 ############
@@ -507,3 +513,47 @@ class Line(Window):
         Window.__init__(self, run, parent, position=position, size=size)
         self._addStyleVal(orientation == "horizontal", "horizontal")
         self._addStyleVal(orientation == "vertical", "vertical")
+        
+
+############
+#   Menu   #
+############
+#XXX: this menubar stuff is implemented poorly!
+class MenuBar(Window):
+    type = "MenuBar"
+    def __init__(self, run):
+        Window.__init__(self, run, parent=None)
+        self.menus = []
+        self.itemHandlers = {}
+        self.form = None
+    def addMenu(self, menu):
+        self.menus.append(menu)
+    def bind(self, item, fn):
+        self.itemHandlers[item.id] = fn
+    def _getConstructorData(self):
+        return {}
+    def _getOtherData(self):
+        return {"form":self.form, "menus":self.menus}
+    def remote_menuItemSelected(self, id):
+        if self.itemHandlers.has_key(id):
+            self.itemHandlers[id]()
+class Menu(pb.Copyable, pb.RemoteCopy):
+    def __init__(self, title):
+        self.title = title
+        self.items = []
+    def addItem(self, item):
+        self.items.append(item)
+pb.setUnjellyableForClass(Menu, Menu)
+
+class MenuItem(pb.Copyable, pb.RemoteCopy):
+    #XXX:burdens user from setting IDs, but is a hack!
+    #id = 100
+    def __init__(self, text, help=u""):
+        #self.id = MenuItem.id = MenuItem.id+1
+#        self.id = id
+        #another hack!
+        self.id = wx.NewId()
+        self.text = text
+        self.help = help
+pb.setUnjellyableForClass(MenuItem, MenuItem)
+

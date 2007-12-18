@@ -7,6 +7,29 @@ class DemoFrame(Frame):
     def __init__(self, run, parent):
         Frame.__init__(self, run, parent, title=u"Widget Demo", sizerType="vertical", minimiseBox=False)
         
+        #setup menu
+        menuBar = MenuBar(run)
+        menuFile = Menu(u"Menu1")
+        item1 = MenuItem(u"Item1")
+        item2 = MenuItem(u"Item1")
+        menuFile.addItem(item1)
+        menuFile.addItem(item2)
+#        menuFile.addItem(MenuItem(u"Item1"))
+#        menuFile.addItem(MenuItem(u"Item2"))
+        menuHelp = Menu(u"Menu2")
+        menuHelp.addItem(MenuItem(u"Item1"))
+        menuHelp.addItem(MenuItem(u"Item2"))
+#        menuHelp.addItem(MenuItem(u"Item1"))
+#        menuHelp.addItem(MenuItem(u"Item2"))
+
+        menuBar.addMenu(menuFile)
+        menuBar.addMenu(menuHelp)
+
+        menuBar.form = self
+        menuBar.bind(item1, self.onItem1)
+        menuBar.bind(item2, self.onItem2)
+        self.menuBar = menuBar
+        
         topPanel = Panel(run, self, sizerType="horizontal")
         lhsPanel = Panel(run, topPanel, sizerType="vertical")
 
@@ -25,8 +48,9 @@ class DemoFrame(Frame):
 
         rhsPanel = Panel(run, topPanel, sizerType="vertical")
         
-        gauge = Gauge(run, rhsPanel, size=(200,-1), value=30)
-        slider = Slider(run, rhsPanel, displayLabels=True)
+        self.gauge = Gauge(run, rhsPanel, size=(200,-1))
+        self.slider = Slider(run, rhsPanel, displayLabels=True)
+        self.slider.bind(ScrollEvent, self.onScroll)
         self.lb = ListBox(run, rhsPanel, choices=["one","two","three"])
         clb = CheckListBox(run, rhsPanel, choices=["one","two","three"])
 
@@ -39,12 +63,20 @@ class DemoFrame(Frame):
         bottomPanel = Panel(run, self, sizerType="vertical")
         output = TextBox(run, bottomPanel, value=u"Widget ouput...", size=(400,100), readonly=True, multiline=True)
 
+    def onItem1(self):
+        self.label.label = u"Item 1 selected"
+        self.label.syncWithLocal()
+
+    def onItem2(self):
+        self.label.label = u"Item 2 selected"
+        self.label.syncWithLocal()
+    
     def onText(self, event):
         def _done(result):
             self.label.label = self.text.value
             self.label.syncWithLocal()
         self.text.syncWithRemote().addCallback(_done)
-
+        
     def onOKButton(self, event):
         def _done(result):
             self.text.value = u"Clicked OK!"
@@ -58,6 +90,12 @@ class DemoFrame(Frame):
         self.lb.choices = ["one","two","three"]
         self.text.syncWithLocal()
         self.lb.syncWithLocal()
+
+    def onScroll(self, event):
+        def _done(result):
+            self.gauge.value = self.slider.value
+            self.gauge.syncWithLocal()
+        self.slider.syncWithRemote().addCallback(_done)
 
 #    def onClose(self, event):
 #        def _done(result):
