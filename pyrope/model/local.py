@@ -521,11 +521,11 @@ class Line(Window):
 #XXX: this menubar stuff is implemented poorly!
 class MenuBar(Window):
     type = "MenuBar"
-    def __init__(self, run):
+    def __init__(self, run, form):
         Window.__init__(self, run, parent=None)
         self.menus = []
         self.itemHandlers = {}
-        self.form = None
+        self.form = form
     def addMenu(self, menu):
         self.menus.append(menu)
     def bind(self, item, fn):

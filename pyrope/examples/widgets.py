@@ -8,7 +8,7 @@ class DemoFrame(Frame):
         Frame.__init__(self, run, parent, title=u"Widget Demo", sizerType="vertical", minimiseBox=False)
         
         #setup menu
-        menuBar = MenuBar(run)
+        menuBar = MenuBar(run, self)
         menuFile = Menu(u"Menu1")
         item1 = MenuItem(u"Item1")
         item2 = MenuItem(u"Item1")
@@ -25,7 +25,6 @@ class DemoFrame(Frame):
         menuBar.addMenu(menuFile)
         menuBar.addMenu(menuHelp)
 
-        menuBar.form = self
         menuBar.bind(item1, self.onItem1)
         menuBar.bind(item2, self.onItem2)
         self.menuBar = menuBar
