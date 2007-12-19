@@ -150,7 +150,18 @@ class MenuItemReference(object):
         self.widget = widget
     def onMenu(self, event):
         self.menuBarRef.remote.callRemote("menuItemSelected", self.widget.GetId())
+
+class StatusBarReference(WindowReference):
+    def remote_getData(self):
+        return self.widget.GetValue()
+    def remote_setData(self, data):
+        self.widget.SetFieldsCount(data["numFields"])
+        for index, text in data["fields"].items():
+            self.widget.SetStatusText(text, index)
         
+############
+# Builders #
+############
 class WidgetBuilder(object):
     def replaceParent(self, app, widgetData):
         parent = widgetData.constructorData["parent"]
@@ -318,6 +329,37 @@ class MenuBarBuilder(WidgetBuilder):
                 wx.EVT_MENU(form, item.id, itemRef.onMenu)
                 wxMenu.AppendItem(wxMenuItem)
             menuBar.Append(wxMenu, menu.title)
+        return localRef
+
+class ToolBarBuilder(WidgetBuilder):
+    widgetClass = wx.ToolBar
+    referenceClass = WindowReference
+    def replaceParent(self, app, widgetData):
+        parent = widgetData.constructorData["parent"]
+        if parent:
+            widget =  app.widgets[parent] 
+            widgetData.constructorData["parent"] = widget
+    def createLocalReference(self, app, widgetData):
+        localRef = WidgetBuilder.createLocalReference(self, app, widgetData)
+        widget = localRef.widget
+        frame = widgetData.constructorData["parent"]
+        frame.SetToolBar(widget)
+        return localRef
+
+class StatusBarBuilder(WidgetBuilder):
+    widgetClass = wx.StatusBar
+    referenceClass = StatusBarReference
+    def replaceParent(self, app, widgetData):
+        parent = widgetData.constructorData["parent"]
+        if parent:
+            widget =  app.widgets[parent] 
+            widgetData.constructorData["parent"] = widget
+    def createLocalReference(self, app, widgetData):
+        localRef = WidgetBuilder.createLocalReference(self, app, widgetData)
+        widget = localRef.widget
+        widget.SetFieldsCount(widgetData.otherData["numFields"])
+        frame = widgetData.constructorData["parent"]
+        frame.SetStatusBar(widget)
         return localRef
 
 class WidgetFactory(object):

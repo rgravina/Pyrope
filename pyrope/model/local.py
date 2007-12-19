@@ -537,6 +537,7 @@ class MenuBar(Window):
     def remote_menuItemSelected(self, id):
         if self.itemHandlers.has_key(id):
             self.itemHandlers[id]()
+
 class Menu(pb.Copyable, pb.RemoteCopy):
     def __init__(self, title):
         self.title = title
@@ -557,3 +558,42 @@ class MenuItem(pb.Copyable, pb.RemoteCopy):
         self.help = help
 pb.setUnjellyableForClass(MenuItem, MenuItem)
 
+class ToolBar(Window):
+    type = "ToolBar"
+    _props = {"horizontal":wx.TB_HORIZONTAL,
+              "vertical":wx.TB_VERTICAL,
+              "text":wx.TB_TEXT,
+              "noicons":wx.TB_NOICONS,
+              "notooltips":wx.TB_NO_TOOLTIPS,
+              "bottom":wx.TB_BOTTOM,
+              "right":wx.TB_RIGHT}
+    def __init__(self, run, parent, position=DefaultPosition, size=DefaultSize,
+                 orientation="horizontal", text=False, icons=True, tooltips=True, alignment="top"):
+        Window.__init__(self, run, parent, position=position, size=size)
+        self._addStyleVal(orientation == "horizontal", "horizontal")
+        self._addStyleVal(orientation == "vertical", "vertical")
+        self._addStyleVal(text, "text")
+        self._addStyleVal(not icons, "noicons")
+        self._addStyleVal(not tooltips, "notooltips")
+        self._addStyleVal(alignment == "bottom", "bottom")
+        self._addStyleVal(alignment == "right", "right")
+    def addWidget(self, widget):
+        self.children.append(widget)
+
+class StatusBar(Window):
+    type = "StatusBar"
+    def __init__(self, run, parent, numFields=1):
+        Window.__init__(self, run, parent)
+        self.numFields = numFields
+        self.fields = {}    #index->text
+    def _getConstructorData(self):
+        return {"parent":self.parent}
+    def _getOtherData(self):
+        return {"numFields":self.numFields}
+    def setData(self, data):
+        pass
+    def getData(self):
+        d = {}
+        d["numFields"] = self.numFields
+        d["fields"] = self.fields
+        return d
