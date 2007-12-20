@@ -1,6 +1,8 @@
 """The Remote (i.e. usually client-side) model."""
 import wx
 import wxaddons.sized_controls as sc
+from wx import ImageFromStream, BitmapFromImage
+import cStringIO
 from twisted.python import log
 from twisted.spread.flavors import NoSuchMethod
 from pyrope.model.shared import *
@@ -358,10 +360,27 @@ class StatusBarBuilder(WidgetBuilder):
         localRef = WidgetBuilder.createLocalReference(self, app, widgetData)
         widget = localRef.widget
         widget.SetFieldsCount(widgetData.otherData["numFields"])
+        for index, text in widgetData.otherData["fields"].items():
+            widget.SetStatusText(text, index)
         frame = widgetData.constructorData["parent"]
         frame.SetStatusBar(widget)
         return localRef
 
+class PNGImageBuilder(WidgetBuilder):
+    widgetClass = wx.Image
+    referenceClass = WindowReference
+    def createLocalReference(self, app, widgetData):
+        parent = app.widgets[widgetData.otherData["parent"]]
+        stream = cStringIO.StringIO(widgetData.otherData["data"])
+        bitmap = BitmapFromImage(ImageFromStream(stream))
+        localRef = self.referenceClass(app, bitmap, widgetData.remoteWidgetReference, widgetData.eventHandlers)
+        app.widgets[widgetData.remoteWidgetReference] = localRef.widget
+        wx.StaticBitmap(parent, wx.ID_ANY, bitmap)
+        return localRef
+
+##################
+# Widget Factory #
+##################
 class WidgetFactory(object):
     """A Factory that produces wxWidgets based on the class of the remote Pyrope widget passed to the constructor."""
     @classmethod

@@ -12,7 +12,7 @@ class DemoFrame(Frame):
         menuBar = MenuBar(run, self)
         menuFile = Menu(u"Menu1")
         item1 = MenuItem(u"Item1")
-        item2 = MenuItem(u"Item1")
+        item2 = MenuItem(u"Item2")
         menuFile.addItem(item1)
         menuFile.addItem(item2)
 #        menuFile.addItem(MenuItem(u"Item1"))
@@ -59,7 +59,8 @@ class DemoFrame(Frame):
         spinner = Spinner(run, rhsPanel2, wrap=True)
         line = Line(run, rhsPanel2, size=(200,-1))
         radioBox = RadioBox(run, rhsPanel2, label=u"Radio Box!", choices=["one","two","three", "four", "five", "six"], cols=2)
-
+        image = PNGImage(run, rhsPanel2, "images/pyrope.png")
+        
         bottomPanel = Panel(run, self, sizerType="vertical")
         output = TextBox(run, bottomPanel, value=u"Widget ouput...", size=(400,100), readonly=True, multiline=True)
 
@@ -74,6 +75,8 @@ class DemoFrame(Frame):
     def onItem2(self):
         self.label.label = u"Item 2 selected"
         self.label.syncWithLocal()
+        self.statusBar.fields = {0:u"Item 2 selected"}
+        self.statusBar.syncWithLocal()
     
     def onText(self, event):
         def _done(result):

@@ -8,6 +8,7 @@ from pyrope.model.shared import *
 from pyrope.model.remote import *
 from pyrope.model.events import *
 from pyrope.errors import RemoteResourceNotCreatedException
+from PIL import Image as PILImage
 
 class IApplication(Interface):
     """A Pyrope application"""
@@ -217,6 +218,7 @@ class Frame(Window):
         self._addStyleToggle(closeBox, "closeBox")
         self._addStyleToggle(stayOnTop, "stayOnTop")
         self._addStyleToggle(systemMenu, "systemMenu")
+        self._addStyleToggle(resizeable, "resizeBorder")
         self.menuBar = None
     def _getConstructorData(self):
         d = Window._getConstructorData(self)
@@ -372,9 +374,9 @@ class ListBox(Window):
     type = "ListBox"
     _props = {"sortAlphabetically":wx.LB_SORT,
               "multipleSelection":wx.LB_MULTIPLE}
-    def __init__(self, run, parent, choices=[], 
+    def __init__(self, run, parent, choices=[], position=DefaultPosition, size=DefaultSize,
                  multipleSelection=False, sortAlphabetically=False):
-        Window.__init__(self, run, parent)
+        Window.__init__(self, run, parent, position=position, size=size)
         self.choices = choices
         self._addStyleVal(sortAlphabetically, "sortAlphabetically")
         self._addStyleVal(multipleSelection, "multipleSelection")
@@ -589,11 +591,20 @@ class StatusBar(Window):
     def _getConstructorData(self):
         return {"parent":self.parent}
     def _getOtherData(self):
-        return {"numFields":self.numFields}
+        return {"numFields":self.numFields, "fields":self.fields}
     def setData(self, data):
         pass
     def getData(self):
-        d = {}
-        d["numFields"] = self.numFields
-        d["fields"] = self.fields
-        return d
+        return self._getOtherData()
+
+class Image(Window):
+    type = "Image"
+    def __init__(self, run, parent, path):
+        Window.__init__(self, run, parent)
+        self.image = open(path)
+        self.data = self.image.read()
+    def _getOtherData(self):
+        return {"parent":self.parent, "data":self.data}
+
+class PNGImage(Image):
+    type = "PNGImage"
