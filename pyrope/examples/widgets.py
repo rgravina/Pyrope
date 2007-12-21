@@ -15,13 +15,9 @@ class DemoFrame(Frame):
         item2 = MenuItem(u"Item2")
         menuFile.addItem(item1)
         menuFile.addItem(item2)
-#        menuFile.addItem(MenuItem(u"Item1"))
-#        menuFile.addItem(MenuItem(u"Item2"))
         menuHelp = Menu(u"Menu2")
         menuHelp.addItem(MenuItem(u"Item1"))
         menuHelp.addItem(MenuItem(u"Item2"))
-#        menuHelp.addItem(MenuItem(u"Item1"))
-#        menuHelp.addItem(MenuItem(u"Item2"))
 
         menuBar.addMenu(menuFile)
         menuBar.addMenu(menuHelp)
@@ -40,7 +36,7 @@ class DemoFrame(Frame):
         self.cancelButton.bind(ButtonEvent, self.onCancelButton)
         self.okButton = Button(run, lhsPanel, value=u"OK", default=True)
         self.okButton.bind(ButtonEvent, self.onOKButton)
-#        self.bind(EventClose, self.onClose)
+#        self.bind(CloseEvent, self.onClose)
 
         checkBox = CheckBox(run, lhsPanel, label=u"two states", alignRight=True)
         checkBoxThree = CheckBox(run, lhsPanel, label=u"three states", threeState=True, userCanSelectThirdState=True)
@@ -59,7 +55,7 @@ class DemoFrame(Frame):
         spinner = Spinner(run, rhsPanel2, wrap=True)
         line = Line(run, rhsPanel2, size=(200,-1))
         radioBox = RadioBox(run, rhsPanel2, label=u"Radio Box!", choices=["one","two","three", "four", "five", "six"], cols=2)
-        image = PNGImage(run, rhsPanel2, "images/pyrope.png")
+        image = Image(run, rhsPanel2, "images/pyrope.png")
         
         bottomPanel = Panel(run, self, sizerType="vertical")
         output = TextBox(run, bottomPanel, value=u"Widget ouput...", size=(400,100), readonly=True, multiline=True)
@@ -104,15 +100,17 @@ class DemoFrame(Frame):
             self.gauge.syncWithLocal()
         self.slider.syncWithRemote().addCallback(_done)
 
-#    def onClose(self, event):
-#        def _done(result):
-#            def _done(result):
-#                dlg.destroy()
-#                if result == wx.ID_OK:
-#                    self.destroy()
-#            dlg.showModal().addCallback(_done)
-#        dlg = MessageDialog(self.run, self, u"Are you sure you want to quit Widget Demo?", caption=u"Quit Widget Demo?")
-#        dlg.createRemote().addCallback(_done)
+    def onClose(self, event):
+        def _done(result):
+            print "remote created"
+            def _done(result):
+                print "destroying dlg"
+                dlg.destroy()
+                if result == wx.ID_OK:
+                    self.destroy()
+            dlg.showModal().addCallback(_done)
+        dlg = MessageDialog(self.run, self, u"Are you sure you want to quit Widget Demo?", caption=u"Quit Widget Demo?")
+        dlg.createRemote().addCallback(_done)
     
 class WidgetsApplication(Application):
     def __init__(self):

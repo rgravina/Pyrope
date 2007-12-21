@@ -232,35 +232,33 @@ class Frame(Window):
             data["menuBar"] = None
         return data
 
-#class Dialog(Window):
-#    type = "SizedDialog"
-#    def __init__(self, run, parent, title=u"", position=DefaultPosition, size=DefaultSize):
-#        Window.__init__(self, run, parent, position=position, size=size)
-#        self.title = title
-#    def _getConstructorData(self):
-#        d = Window._getConstructorData(self)
-#        d["title"] = self.title
-#        return d
-#    def showModal(self):
-#        return self.callRemote("ShowModal")
-#pb.setUnjellyableForClass(Dialog, Dialog)
-#
-#class MessageDialog(Window):
-#    type = "MessageDialog"
-#    def __init__(self, run, parent, message, caption=u"Message Box", position=DefaultPosition):
-#        Window.__init__(self, run, parent, position=position)
-#        self.caption = caption
-#        self.message = message
-#    def _getConstructorData(self):
-#        d = Window._getConstructorData(self)
-#        d["caption"] = self.caption
-#        d["message"] = self.message
-#        #no size for message box
-#        del d["size"]
-#        return d
-#    def showModal(self):
-#        return self.callRemote("ShowModal")
-#pb.setUnjellyableForClass(MessageDialog, MessageDialog)
+class Dialog(Window):
+    type = "Dialog"
+    def __init__(self, run, parent, title=u"", position=DefaultPosition, size=DefaultSize):
+        Window.__init__(self, run, parent, position=position, size=size)
+        self.title = title
+    def _getConstructorData(self):
+        d = Window._getConstructorData(self)
+        d["title"] = self.title
+        return d
+    def showModal(self):
+        return self.callRemote("ShowModal")
+
+class MessageDialog(Window):
+    type = "MessageDialog"
+    def __init__(self, run, parent, message, caption=u"Message Box", position=DefaultPosition):
+        Window.__init__(self, run, parent, position=position)
+        self.caption = caption
+        self.message = message
+    def _getConstructorData(self):
+        d = Window._getConstructorData(self)
+        d["caption"] = self.caption
+        d["message"] = self.message
+        #no size for message box
+        del d["size"]
+        return d
+    def showModal(self):
+        return self.callRemote("ShowModal")
 
 ##########
 ## Panel #
@@ -380,6 +378,7 @@ class ListBox(Window):
         self.choices = choices
         self._addStyleVal(sortAlphabetically, "sortAlphabetically")
         self._addStyleVal(multipleSelection, "multipleSelection")
+        self.selectedIndex = None
     def _getConstructorData(self):
         d = Window._getConstructorData(self)
         d["choices"] = self.choices
@@ -605,6 +604,3 @@ class Image(Window):
         self.data = self.image.read()
     def _getOtherData(self):
         return {"parent":self.parent, "data":self.data}
-
-class PNGImage(Image):
-    type = "PNGImage"

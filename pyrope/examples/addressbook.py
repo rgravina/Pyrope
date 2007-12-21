@@ -6,6 +6,7 @@ class AddressBookEntry:
     def __init__(self, name, email):
         self.name = name
         self.email = email
+        self.modified = False
         
 entries=[AddressBookEntry("Robert Gravina", "robert@gravina.com"), AddressBookEntry("Waka Inoue", "waka@inoue.com")]
 
@@ -32,14 +33,24 @@ class AddressBookFrame(Frame):
         self.statusBar.fields = {0:u"%d entires" % len(entries)}
 
     def onListBoxSelect(self, event):
-        def _done(result):
-            index = self.list.selectedIndex
-            self.name.value = entries[index].name 
-            self.email.value = entries[index].email
-            self.name.syncWithLocal()
-            self.email.syncWithLocal()             
-        self.list.syncWithRemote().addCallback(_done)
+        index = event.data
+        if entries[n].modified:
+            print "entry was modified"
+            entries[index].modified = False 
+        self.name.value = entries[index].name 
+        self.email.value = entries[index].email
+        self.name.syncWithLocal()
+        self.email.syncWithLocal()
 
+
+
+
+#    def onText(self, event):
+#        def _done(result):
+#            index = self.list.selectedIndex
+#            entries[index].modified = True 
+#        self.list.syncWithRemote().addCallback(_done)
+        
 class AddressBookApplication(Application):
     def __init__(self):
         Application.__init__(self, "Address Book", description="A basic address book application.")

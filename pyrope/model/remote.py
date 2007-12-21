@@ -96,12 +96,12 @@ class TopLevelWindowReference(WindowReference):
 
 class FrameReference(TopLevelWindowReference):
     pass
-
 #class SizedFrameReference(TopLevelWindowReference):
 #    pass
 
 class DialogReference(TopLevelWindowReference):
-    pass
+    def remote_ShowModal(self):
+        return self.widget.ShowModal()
 
 #class PanelReference(WindowReference):
 #    pass
@@ -210,11 +210,19 @@ class TopLevelWindowBuilder(WidgetBuilder):
 class DialogBuilder(TopLevelWindowBuilder):
     widgetClass = sc.SizedDialog
     referenceClass = DialogReference
+    def replaceParent(self, app, widgetData):
+        parent = widgetData.constructorData["parent"]
+        if parent:
+            widgetData.constructorData["parent"] = app.widgets[parent] 
 
-class MessageDialogBuilder(TopLevelWindowBuilder):
+class MessageDialogBuilder(WidgetBuilder):
     widgetClass = wx.MessageDialog
     referenceClass = DialogReference
-
+    def replaceParent(self, app, widgetData):
+        parent = widgetData.constructorData["parent"]
+        if parent:
+            widgetData.constructorData["parent"] = app.widgets[parent] 
+ 
 class FrameBuilder(TopLevelWindowBuilder):
     widgetClass = sc.SizedFrame
     referenceClass = FrameReference
@@ -366,7 +374,7 @@ class StatusBarBuilder(WidgetBuilder):
         frame.SetStatusBar(widget)
         return localRef
 
-class PNGImageBuilder(WidgetBuilder):
+class ImageBuilder(WidgetBuilder):
     widgetClass = wx.Image
     referenceClass = WindowReference
     def createLocalReference(self, app, widgetData):
@@ -375,7 +383,9 @@ class PNGImageBuilder(WidgetBuilder):
         bitmap = BitmapFromImage(ImageFromStream(stream))
         localRef = self.referenceClass(app, bitmap, widgetData.remoteWidgetReference, widgetData.eventHandlers)
         app.widgets[widgetData.remoteWidgetReference] = localRef.widget
-        wx.StaticBitmap(parent, wx.ID_ANY, bitmap)
+        #if parent is a panel, dispay the image
+        if isinstance(parent, wx.Panel):
+            wx.StaticBitmap(parent, wx.ID_ANY, bitmap)
         return localRef
 
 ##################
