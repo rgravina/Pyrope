@@ -34,7 +34,7 @@ class AddressBookFrame(Frame):
 
     def onListBoxSelect(self, event):
         index = event.data
-        if entries[n].modified:
+        if entries[index].modified:
             print "entry was modified"
             entries[index].modified = False 
         self.name.value = entries[index].name 

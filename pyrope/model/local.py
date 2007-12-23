@@ -283,9 +283,9 @@ class TextBox(Window):
               "left":wx.TE_LEFT,
               "centre":wx.TE_CENTRE,
               "right":wx.TE_RIGHT,
-              }
+              "processEnter":wx.TE_PROCESS_ENTER}
     def __init__(self, run, parent, value=u"", position=DefaultPosition, size=DefaultSize,
-                 justification="left", multiline=False, readonly=False, password=False):
+                 justification="left", multiline=False, readonly=False, password=False, processEnter=False):
         Window.__init__(self, run, parent, position=position, size=size)
         self.value = value
         self._addStyleVal(multiline, "multiline")
@@ -294,6 +294,7 @@ class TextBox(Window):
         self._addStyleVal(justification == "left", "left")
         self._addStyleVal(justification == "centre", "centre")
         self._addStyleVal(justification == "right", "right")
+        self._addStyleVal(processEnter, "processEnter")
     def _getConstructorData(self):
         d = Window._getConstructorData(self)
         d["value"] = self.value
