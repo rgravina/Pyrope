@@ -1,7 +1,7 @@
 import wx
 from pyrope.server import Application
 from pyrope.model import *
-
+ 
 class AddressBookEntry:
     def __init__(self, name, email):
         self.name = name
@@ -41,9 +41,6 @@ class AddressBookFrame(Frame):
         self.email.value = entries[index].email
         self.name.syncWithLocal()
         self.email.syncWithLocal()
-
-
-
 
 #    def onText(self, event):
 #        def _done(result):

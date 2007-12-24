@@ -103,6 +103,11 @@ class DialogReference(TopLevelWindowReference):
     def remote_ShowModal(self):
         return self.widget.ShowModal()
 
+class TextEntryDialogReference(DialogReference):
+    def remote_showModalAndGetValue(self):
+        id = self.widget.ShowModal()
+        val = self.widget.GetValue()
+        return (id, val)
 #class PanelReference(WindowReference):
 #    pass
 
@@ -222,6 +227,10 @@ class MessageDialogBuilder(WidgetBuilder):
         parent = widgetData.constructorData["parent"]
         if parent:
             widgetData.constructorData["parent"] = app.widgets[parent] 
+
+class TextEntryDialogBuilder(DialogBuilder):
+    widgetClass = wx.TextEntryDialog
+    referenceClass = TextEntryDialogReference
  
 class FrameBuilder(TopLevelWindowBuilder):
     widgetClass = sc.SizedFrame

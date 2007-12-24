@@ -260,6 +260,29 @@ class MessageDialog(Window):
     def showModal(self):
         return self.callRemote("ShowModal")
 
+class TextEntryDialog(Window):
+    type = "TextEntryDialog"
+    _props = {"cancelButton":wx.CANCEL}
+    def __init__(self, run, parent, message, caption=u"Please enter text", defaultValue="", position=DefaultPosition,
+                 cancelButton=False):
+        Window.__init__(self, run, parent, position=position)
+        self.caption = caption
+        self.message = message
+        self.defaultValue = defaultValue
+        #different from wxPython defaults
+        self.wxStyle = wx.OK | wx.CENTRE
+        self._addStyleVal(cancelButton, "cancelButton")
+    def _getConstructorData(self):
+        d = Window._getConstructorData(self)
+        d["caption"] = self.caption
+        d["message"] = self.message
+        d["defaultValue"] = self.defaultValue
+        #no size for message box
+        del d["size"]
+        return d
+    def showModalAndGetValue(self):
+        return self.callRemote("showModalAndGetValue")
+
 ##########
 ## Panel #
 ##########
