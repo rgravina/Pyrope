@@ -1,4 +1,3 @@
-from pyrope.server import Application
 from pyrope.model import *
 
 class ChatFrame(Frame):
@@ -11,10 +10,11 @@ class ChatFrame(Frame):
 
     def onSendButton(self, event):
         def _done(result):
-            self.chatLog.value += "\n" + self.run.username + ": " + self.chatInput.value
-            self.chatLog.syncWithLocal()
-            self.chatInput.value = ""
-            self.chatInput.syncWithLocal()
+            for app in self.run.app.runningApplications.values():
+                app.frame.chatLog.value += self.run.username + ": " + self.chatInput.value + "\n"
+                app.frame.chatLog.syncWithLocal()
+                app.frame.chatInput.value = ""
+                app.frame.chatInput.syncWithLocal()
         self.chatInput.syncWithRemote().addCallback(_done)
 
 class ChatApplication(Application):
@@ -22,17 +22,19 @@ class ChatApplication(Application):
         Application.__init__(self, "Chat", description="A simple chat application which demonstrates multi-user applications.")
     def start(self, run):
         def _frameDone(result):
-            frame.chatLog.value += run.username + " logged in."
-            frame.chatLog.syncWithLocal()
-            frame.centre()
-            frame.show()
+            run.frame.centre()
+            run.frame.show()
+            username = run.username
+            for app in self.runningApplications.values():
+                app.frame.chatLog.value += username + " logged in.\n"
+                app.frame.chatLog.syncWithLocal()
 
         def _gotUsername((result, value)):
             #now we have username, log user in
             run.username = value                
             #create a frame on the client
-            frame.createRemote().addCallback(_frameDone)
-        frame = ChatFrame(run, None)
+            run.frame.createRemote().addCallback(_frameDone)
+        run.frame = ChatFrame(run, None)
 
         def _tedDone(result):
             ted.showModalAndGetValue().addCallback(_gotUsername)

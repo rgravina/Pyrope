@@ -18,7 +18,8 @@ class IApplication(Interface):
 class RunningApplication(object):
     """Represents an instance of a running application.
     At this stage there are no methods, it just acts as a parameter object."""
-    def __init__(self, perspective, handler):
+    def __init__(self, app, perspective, handler):
+        self.app = app                     #application object
         self.perspective = perspective     #users perpective 
         self.handler = handler             #client-side application handler
         self.widgets = []                  #widgets in this instance
@@ -34,7 +35,7 @@ class Application(pb.Viewable):
         """Called by the client when a user wants to start up a new application."""
         #save the perspective for later use
         #TODO: make sure perspective is removed when app is closed
-        run = RunningApplication(perspective, handler)
+        run = RunningApplication(self, perspective, handler)
         self.runningApplications[handler] = run
         #simply call the start method
         self.start(run)
