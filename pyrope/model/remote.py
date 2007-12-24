@@ -58,6 +58,7 @@ class WindowReference(PyropeReferenceable):
         self.widget = widget     #wxWindow    
         self.remote = remote     #server-side Pyrope widget refernce  
         self.boundEvents = []    #bound Pyrope events, e.g. EventClose
+        self.children = []       #references of children
         for event in handlers:
             eventClass = eval(event)
             self.boundEvents.append(eventClass)
@@ -191,6 +192,8 @@ class WidgetBuilder(object):
                 childRef = WidgetFactory.create(app, childData)
                 #server needs to know about child reference
                 childData.remoteWidgetReference.callRemote("updateRemote", childRef)
+                #add to localRef children
+                localRef.children.append(childRef)
         return localRef
 
 class TopLevelWindowBuilder(WidgetBuilder):
@@ -220,13 +223,9 @@ class DialogBuilder(TopLevelWindowBuilder):
         if parent:
             widgetData.constructorData["parent"] = app.widgets[parent] 
 
-class MessageDialogBuilder(WidgetBuilder):
+class MessageDialogBuilder(DialogBuilder):
     widgetClass = wx.MessageDialog
     referenceClass = DialogReference
-    def replaceParent(self, app, widgetData):
-        parent = widgetData.constructorData["parent"]
-        if parent:
-            widgetData.constructorData["parent"] = app.widgets[parent] 
 
 class TextEntryDialogBuilder(DialogBuilder):
     widgetClass = wx.TextEntryDialog
@@ -401,6 +400,26 @@ class ImageBuilder(WidgetBuilder):
         #if parent is a panel, dispay the image
         if isinstance(parent, wx.Panel):
             wx.StaticBitmap(parent, wx.ID_ANY, bitmap)
+        return localRef
+
+class SplitterBuilder(WidgetBuilder):
+    widgetClass = wx.SplitterWindow
+    referenceClass = WindowReference
+    def createLocalReference(self, app, widgetData):
+        localRef = WidgetBuilder.createLocalReference(self, app, widgetData)
+        widget = localRef.widget
+        #if no children, return
+        if not localRef.children:
+            pass
+        #if only one child, use initialise
+        elif len(localRef.children) is 1:
+            widget.Initialize(localRef.children[0].widget)
+        #if two, spit horizontally or vertically
+        elif widgetData.otherData["mode"] is "horizontal":
+            widget.SplitHorizontally(localRef.children[0].widget, localRef.children[1].widget)
+        else:
+            widget.SplitVertically(localRef.children[0].widget, localRef.children[1].widget)
+        widget.SetMinimumPaneSize(widgetData.otherData["minimumPaneSize"])
         return localRef
 
 ##################

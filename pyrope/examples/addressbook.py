@@ -8,7 +8,9 @@ class AddressBookEntry:
         self.email = email
         self.modified = False
         
-entries=[AddressBookEntry("Robert Gravina", "robert@gravina.com"), AddressBookEntry("Waka Inoue", "waka@inoue.com")]
+entries=[AddressBookEntry("Robert Gravina", "robert@gravina.com"), 
+         AddressBookEntry("Waka Inoue", "waka@inoue.com"),
+         AddressBookEntry("Misaki Ito", "misaki@ito.com")]
 
 class AddressBookFrame(Frame):
     def __init__(self, run, parent):

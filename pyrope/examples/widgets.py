@@ -69,6 +69,12 @@ class DemoFrame(Frame):
         self.statusBar = StatusBar(run, self)
         self.statusBar.fields = {0:u"demo online"}
 
+        splitter = Splitter(run, self, minimumPaneSize=20, liveUpdate=True)
+        splitterPanel1 = Panel(run, splitter, sizerType="vertical")
+        label = Label(run, splitterPanel1, value=u"Left side of splitter panel")
+        splitterPanel2 = Panel(run, splitter, sizerType="vertical")
+        label = Label(run, splitterPanel2, value=u"Right side of splitter panel")
+
     def onItem1(self):
         self.label.label = u"Item 1 selected"
         self.label.syncWithLocal()
@@ -94,7 +100,7 @@ class DemoFrame(Frame):
             self.text.syncWithLocal()
             self.lb.syncWithLocal()
         self.text.syncWithRemote().addCallback(_done)
-
+        
     def onCancelButton(self, event):
         self.text.value = u"Clicked Cancel!"
         self.lb.choices = ["one","two","three"]
@@ -109,9 +115,7 @@ class DemoFrame(Frame):
 
     def onClose(self, event):
         def _done(result):
-            print "remote created"
             def _done(result):
-                print "destroying dlg"
                 dlg.destroy()
                 if result == wx.ID_OK:
                     self.destroy()

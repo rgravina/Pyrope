@@ -541,6 +541,21 @@ class Line(Window):
         self._addStyleVal(orientation == "vertical", "vertical")
         
 
+class Splitter(Window):
+    type = "Splitter"
+    _props = {"3d":wx.SP_3D,
+              "border":wx.BORDER,
+              "liveUpdate":wx.SP_LIVE_UPDATE}
+    def __init__(self, run, parent, position=DefaultPosition, size=DefaultSize,
+                 border=False, liveUpdate=False, mode="horizontal", minimumPaneSize=0):
+        Window.__init__(self, run, parent, position=position, size=size)
+        self._addStyleVal(border, "border")
+        self._addStyleVal(liveUpdate, "liveUpdate")
+        self.mode = mode
+        self.minimumPaneSize = minimumPaneSize
+    def _getOtherData(self):
+        return {"mode":self.mode, "minimumPaneSize":self.minimumPaneSize}
+
 ############
 #   Menu   #
 ############
