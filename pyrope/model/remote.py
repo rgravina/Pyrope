@@ -361,8 +361,14 @@ class ToolBarBuilder(WidgetBuilder):
     def createLocalReference(self, app, widgetData):
         localRef = WidgetBuilder.createLocalReference(self, app, widgetData)
         widget = localRef.widget
+#        bitmap = wx.Bitmap("images/dot-red.png", wx.BITMAP_TYPE_PNG)
+        for label, image in widgetData.otherData["tools"]:
+            stream = cStringIO.StringIO(image)
+            bitmap = BitmapFromImage(ImageFromStream(stream))
+            widget.AddLabelTool(wx.ID_ANY, label, bitmap)
         frame = widgetData.constructorData["parent"]
         frame.SetToolBar(widget)
+        widget.Realize()
         return localRef
 
 class StatusBarBuilder(WidgetBuilder):

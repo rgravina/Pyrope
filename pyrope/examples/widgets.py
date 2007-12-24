@@ -6,8 +6,14 @@ from twisted.internet.defer import inlineCallbacks
 class DemoFrame(Frame):
     def __init__(self, run, parent):
         Frame.__init__(self, run, parent, title=u"Widget Demo", sizerType="vertical", minimiseBox=False)
-#        toolBar = ToolBar(run, self)
-        
+        self.toolBar = ToolBar(run, self)
+#        self.toolBar.addWidget(Button(run, self.toolBar, value=u"Tool"))
+        self.toolBar.addTool(u"Tool", Image(run, self, "images/dot-red.png"))
+        self.toolBar.addTool(u"Tool", Image(run, self, "images/dot-blue.png"))
+        self.toolBar.addTool(u"Tool", Image(run, self, "images/dot-green.png"))
+        self.toolBar.addTool(u"Tool", Image(run, self, "images/dot-orange.png"))
+        self.toolBar.addTool(u"Tool", Image(run, self, "images/dot-purple.png"))
+
         #setup menu
         menuBar = MenuBar(run, self)
         menuFile = Menu(u"Menu1")
@@ -61,6 +67,7 @@ class DemoFrame(Frame):
         output = TextBox(run, bottomPanel, value=u"Widget ouput...", size=(400,100), readonly=True, multiline=True)
 
         self.statusBar = StatusBar(run, self)
+        self.statusBar.fields = {0:u"demo online"}
 
     def onItem1(self):
         self.label.label = u"Item 1 selected"

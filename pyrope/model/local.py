@@ -603,8 +603,13 @@ class ToolBar(Window):
         self._addStyleVal(not tooltips, "notooltips")
         self._addStyleVal(alignment == "bottom", "bottom")
         self._addStyleVal(alignment == "right", "right")
-    def addWidget(self, widget):
-        self.children.append(widget)
+        self.tools = []
+#    def addWidget(self, widget):
+#        self.children.append(widget)
+    def addTool(self, label, image):
+        self.tools.append((label, image.data))
+    def _getOtherData(self):
+        return {"tools":self.tools}
 
 class StatusBar(Window):
     type = "StatusBar"
