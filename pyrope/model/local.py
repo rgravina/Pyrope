@@ -375,6 +375,19 @@ class Button(Window):
     def _getOtherData(self):
         return{"default":self.default}
 
+class BitmapButton(Window):
+    type = "BitmapButton"
+    def __init__(self, run, parent, image,
+                 default=True):
+        Window.__init__(self, run, parent)
+        self.image = image
+        self.default = default
+    def _getOtherData(self):
+        d = Window._getConstructorData(self)
+        d["image"] = self.image.data
+        d["default"] = self.default
+        return d
+
 class Choice(Window):
     type = "Choice"
     _props = {"sortAlphabetically":wx.CB_SORT}

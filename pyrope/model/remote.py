@@ -277,6 +277,15 @@ class ButtonBuilder(WidgetBuilder):
             widget.SetDefault()
         return localRef
 
+class BitmapButtonBuilder(ButtonBuilder):
+    widgetClass = wx.BitmapButton
+    referenceClass = WindowReference
+    def createLocalReference(self, app, widgetData):
+        stream = cStringIO.StringIO(widgetData.otherData["image"])
+        bitmap = BitmapFromImage(ImageFromStream(stream))
+        widgetData.constructorData["bitmap"] = bitmap
+        return ButtonBuilder.createLocalReference(self, app, widgetData)
+
 class ChoiceBuilder(WidgetBuilder):
     widgetClass = wx.Choice
     referenceClass = ControlWithItemsReference

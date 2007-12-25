@@ -74,6 +74,7 @@ class DemoFrame(Frame):
         label = Label(run, splitterPanel1, value=u"Left side of splitter panel")
         splitterPanel2 = Panel(run, splitter, sizerType="vertical")
         label = Label(run, splitterPanel2, value=u"Right side of splitter panel")
+        bitmapButton = BitmapButton(run, splitterPanel2, Image(run, self, "images/dot-red.png"))
 
     def onItem1(self):
         self.label.label = u"Item 1 selected"
