@@ -669,15 +669,15 @@ class Notebook(Window):
               "left":wx.NB_LEFT,
               "right":wx.NB_RIGHT,
               "bottom":wx.NB_BOTTOM}
-    def __init__(self, run, parent, position=DefaultPosition, size=DefaultSize):
-        Window.__init__(self, run, parent, position=position, size=size,
-                        tabPosition="top")
+    def __init__(self, run, parent, position=DefaultPosition, size=DefaultSize,
+                 tabPosition="top"):
+        Window.__init__(self, run, parent, position=position, size=size)
         self.pages = []
-    def addPage(self, title, page):
-        self.pages.append((title, page))
         self._addStyleVal(tabPosition == "top", "top")
         self._addStyleVal(tabPosition == "bottom", "bottom")
         self._addStyleVal(tabPosition == "left", "left")
         self._addStyleVal(tabPosition == "right", "right")
+    def addPage(self, title, page):
+        self.pages.append((title, page))
     def _getOtherData(self):
         return {"pages":self.pages}
