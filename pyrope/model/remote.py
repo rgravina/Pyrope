@@ -431,6 +431,17 @@ class SplitterBuilder(WidgetBuilder):
         widget.SetMinimumPaneSize(widgetData.otherData["minimumPaneSize"])
         return localRef
 
+class NotebookBuilder(WidgetBuilder):
+    widgetClass = wx.Notebook
+    referenceClass = WindowReference
+    def createLocalReference(self, app, widgetData):
+        localRef = WidgetBuilder.createLocalReference(self, app, widgetData)
+        nb = localRef.widget
+        pages = widgetData.otherData["pages"]
+        for title, page in pages:
+            pageWidget = app.widgets[page] 
+            nb.AddPage(pageWidget, title)
+            
 ##################
 # Widget Factory #
 ##################
@@ -441,7 +452,7 @@ class WidgetFactory(object):
         builder = eval(widgetData.type+"Builder")()
         #if the remote widget has a parent (supplied as a pb.RemoteReference) replace the attribute with the coressponding wxWindow which is it's real parent
         builder.replaceParent(app, widgetData)
-        #create and return the local pb.Referenceable that will manage this widget
+        #create the local pb.Referenceable that will manage this widget
         return builder.createLocalReference(app, widgetData)
 
 class RemoteApplicationHandler(pb.Referenceable):

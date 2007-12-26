@@ -7,7 +7,6 @@ class DemoFrame(Frame):
     def __init__(self, run, parent):
         Frame.__init__(self, run, parent, title=u"Widget Demo", sizerType="vertical", minimiseBox=False)
         self.toolBar = ToolBar(run, self)
-#        self.toolBar.addWidget(Button(run, self.toolBar, value=u"Tool"))
         self.toolBar.addTool(u"Tool", Image(run, self, "images/dot-red.png"))
         self.toolBar.addTool(u"Tool", Image(run, self, "images/dot-blue.png"))
         self.toolBar.addTool(u"Tool", Image(run, self, "images/dot-green.png"))
@@ -76,6 +75,19 @@ class DemoFrame(Frame):
         label = Label(run, splitterPanel2, value=u"Right side of splitter panel")
         bitmapButton = BitmapButton(run, splitterPanel2, Image(run, self, "images/dot-red.png"))
 
+        rhsPanel3 = Panel(run, topPanel, sizerType="vertical")
+        notebook = Notebook(run, topPanel)
+        notePanel1 = Panel(run, notebook, sizerType="horizontal")
+        notebook.addPage(u"Page 1", notePanel1)
+        Label(run, notePanel1, value=u"Page 1")
+        Label(run, notePanel1, value=u"Page 1")
+        Label(run, notePanel1, value=u"Page 1")
+        notePanel2 = Panel(run, notebook, sizerType="horizontal")
+        notebook.addPage(u"Page 2", notePanel2)
+        Label(run, notePanel2, value=u"Page 2")
+        Label(run, notePanel2, value=u"Page 2")
+        Label(run, notePanel2, value=u"Page 2")
+    
     def onItem1(self):
         self.label.label = u"Item 1 selected"
         self.label.syncWithLocal()

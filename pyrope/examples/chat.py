@@ -13,7 +13,7 @@ class ChatFrame(Frame):
             #update all clients chatlogs
             for app in self.run.app.runningApplications.values():
                 app.frame.chatLog.value += self.run.username + ": " + self.chatInput.value + "\n"
-                app.frame.chatLog.syncWithLocal()
+                app.frame.chatLog.syncWithLocal()                
             #clear input textbox
             self.chatInput.value = ""
             self.chatInput.syncWithLocal()

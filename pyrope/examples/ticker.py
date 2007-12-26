@@ -4,7 +4,7 @@ import datetime
 from twisted.internet import task
 
 class TickerFrame(Frame):
-    dueDate = datetime.datetime(2008, 1, 24, 18, 00)
+    dueDate = datetime.datetime(2008, 1, 23, 17, 00)
     def __init__(self, run, parent):
         Frame.__init__(self, run, parent, title=u"Ticker", sizerType="vertical", size=(300,120))
         Label(run, self, value=u"Thesis is due in:")

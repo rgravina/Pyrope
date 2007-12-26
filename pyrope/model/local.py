@@ -662,3 +662,13 @@ class Image(Window):
         self.data = self.image.read()
     def _getOtherData(self):
         return {"parent":self.parent, "data":self.data}
+
+class Notebook(Window):
+    type = "Notebook"
+    def __init__(self, run, parent, position=DefaultPosition, size=DefaultSize):
+        Window.__init__(self, run, parent, position=position, size=size)
+        self.pages = []
+    def addPage(self, title, page):
+        self.pages.append((title, page))
+    def _getOtherData(self):
+        return {"pages":self.pages}
