@@ -665,10 +665,19 @@ class Image(Window):
 
 class Notebook(Window):
     type = "Notebook"
+    _props = {"top":wx.NB_TOP,
+              "left":wx.NB_LEFT,
+              "right":wx.NB_RIGHT,
+              "bottom":wx.NB_BOTTOM}
     def __init__(self, run, parent, position=DefaultPosition, size=DefaultSize):
-        Window.__init__(self, run, parent, position=position, size=size)
+        Window.__init__(self, run, parent, position=position, size=size,
+                        tabPosition="top")
         self.pages = []
     def addPage(self, title, page):
         self.pages.append((title, page))
+        self._addStyleVal(tabPosition == "top", "top")
+        self._addStyleVal(tabPosition == "bottom", "bottom")
+        self._addStyleVal(tabPosition == "left", "left")
+        self._addStyleVal(tabPosition == "right", "right")
     def _getOtherData(self):
         return {"pages":self.pages}
