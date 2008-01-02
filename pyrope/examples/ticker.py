@@ -4,11 +4,15 @@ import datetime
 from twisted.internet import task
 
 class TickerFrame(Frame):
-    dueDate = datetime.datetime(2008, 1, 23, 17, 00)
+    draftDueDate = datetime.datetime(2008, 1, 16, 17, 00)
+    thesisDueDate = datetime.datetime(2008, 1, 23, 17, 00)
     def __init__(self, run, parent):
-        Frame.__init__(self, run, parent, title=u"Ticker", sizerType="vertical", size=(300,120))
-        Label(run, self, value=u"Thesis is due in:")
-        self.labelTime = Label(run, self, value=self._getDiffStr())
+        Frame.__init__(self, run, parent, title=u"Ticker", sizerType="vertical", size=(300,210))
+        Label(run, self, value=u"Thesis DRAFT is due in:")
+        self.labelDraftTime = Label(run, self, value=self._getDraftDiffStr())
+        Line(run, self, size=(300,-1))
+        Label(run, self, value=u"Thesis FINAL is due in:")
+        self.labelThesisTime = Label(run, self, value=self._getThesisDiffStr())
         self.btnOK = Button(run, self, value=u"Oh No!")
         self.btnOK.bind(ButtonEvent, self.onButton)
         self.bind(CloseEvent, self.onClose)
@@ -21,12 +25,14 @@ class TickerFrame(Frame):
         self.loop.stop()
         
     def updateClock(self):
-        self.labelTime.label=self._getDiffStr()
-        self.labelTime.syncWithLocal()
+        self.labelDraftTime.label=self._getDraftDiffStr()
+        self.labelDraftTime.syncWithLocal()
+        self.labelThesisTime.label=self._getThesisDiffStr()
+        self.labelThesisTime.syncWithLocal()
 
-    def _getDiffStr(self):
+    def _getDiffStr(self, dueDate):
         now = datetime.datetime.now()
-        diff = self.dueDate - now
+        diff = dueDate - now
         hours = diff.seconds / 3600 #secs in one hour
         if hours:
             mins = ((diff.seconds % (hours*3600) / 60)) #secs in one min
@@ -38,7 +44,12 @@ class TickerFrame(Frame):
             secs = diff.seconds
         diffStr = "%d days, %d hours %d mins %d secs" % (diff.days, hours, mins, secs)
         return diffStr
-    
+
+    def _getDraftDiffStr(self):
+        return self._getDiffStr(self.draftDueDate)
+    def _getThesisDiffStr(self):
+        return self._getDiffStr(self.thesisDueDate)
+
     def onButton(self, event):
         self.callRemote("Close")
 

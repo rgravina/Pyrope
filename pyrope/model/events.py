@@ -23,8 +23,10 @@ class EventFactory(object):
                  wx.EVT_TEXT.typeId:"_getTextEvent",
                  wx.EVT_TEXT_ENTER.typeId:"_getTextEnterEvent",
                  wx.EVT_CLOSE.typeId:"_getCloseEvent",
-                 wx.EVT_SCROLL_CHANGED.typeId:"_getScrollChanged",
-                 wx.EVT_LISTBOX.typeId:"_getListBoxEvent"}
+                 wx.EVT_SCROLL_CHANGED.typeId:"_getScrollEvnet",
+                 wx.EVT_LISTBOX.typeId:"_getListBoxEvent",
+                 wx.EVT_NOTEBOOK_PAGE_CHANGED.typeId:"_getNotebookPageChangedEvent",
+                 wx.EVT_NOTEBOOK_PAGE_CHANGING.typeId:"_getNotebookPageChangingEvent"}
 
     @classmethod
     def create(cls, remote, wxEvent):
@@ -49,6 +51,12 @@ class EventFactory(object):
     @classmethod
     def _getListBoxEvent(self, remote, wxEvent):
             return Event(remote, ListBoxEvent, data=wxEvent.GetSelection())
+    @classmethod
+    def _getNotebookPageChangedEvent(self, remote, wxEvent):
+            return Event(remote, NotebookPageChangedEvent, data={"selection":wxEvent.GetSelection(), "oldSelection":wxEvent.GetOldSelection()})
+    @classmethod
+    def _getNotebookPageChangingEvent(self, remote, wxEvent):
+            return Event(remote, NotebookPageChangingEvent, data={"selection":wxEvent.GetSelection(), "oldSelection":wxEvent.GetOldSelection()})
 
 class ButtonEvent(object):
     type = "ButtonEvent"
@@ -73,3 +81,11 @@ class ScrollEvent(object):
 class ListBoxEvent(object):
     type = "ListBoxEvent"
     wxEventClass = wx.EVT_LISTBOX
+
+class NotebookPageChangedEvent(object):
+    type = "NotebookPageChangedEvent"
+    wxEventClass = wx.EVT_NOTEBOOK_PAGE_CHANGED
+
+class NotebookPageChangingEvent(object):
+    type = "NotebookPageChangingEvent"
+    wxEventClass = wx.EVT_NOTEBOOK_PAGE_CHANGING

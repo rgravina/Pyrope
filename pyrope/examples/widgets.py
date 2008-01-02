@@ -87,7 +87,17 @@ class DemoFrame(Frame):
         Label(run, notePanel2, value=u"Page 2")
         Label(run, notePanel2, value=u"Page 2")
         Label(run, notePanel2, value=u"Page 2")
-    
+        notebook.bind(NotebookPageChangingEvent, self.onNotebookChanging)
+#        notebook.bind(NotebookPageChangedEvent, self.onNotebookChanged)
+
+    def onNotebookChanging(self, event):
+        self.label.label = u"Notebook changing from %d to %d" % (event.data["oldSelection"], event.data["selection"])
+        self.label.syncWithLocal()
+        
+    def onNotebookChanged(self, event):
+        self.label.label = u"Notebook changed from %d to %d" % (event.data["oldSelection"], event.data["selection"])
+        self.label.syncWithLocal()
+        
     def onItem1(self):
         self.label.label = u"Item 1 selected"
         self.label.syncWithLocal()

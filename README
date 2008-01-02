@@ -38,4 +38,4 @@ desktop GUI applications.
 
 * Acknowlegements *
 Pyrope would not have been possible wihout wxWidgets and wxPython, Twisted 
-Python, the Python language itself.
+Python and the Python language itself.
