@@ -5,7 +5,7 @@ from twisted.internet import task
 
 class TickerFrame(Frame):
     draftDueDate = datetime.datetime(2008, 1, 16, 17, 00)
-    thesisDueDate = datetime.datetime(2008, 1, 23, 17, 00)
+    thesisDueDate = datetime.datetime(2008, 1, 30, 17, 00)
     def __init__(self, run, parent):
         Frame.__init__(self, run, parent, title=u"Ticker", sizerType="vertical", size=(300,210))
         Label(run, self, value=u"Thesis DRAFT is due in:")

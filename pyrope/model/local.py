@@ -71,14 +71,22 @@ class PyropeWidget(pb.Referenceable):
         else:
             raise RemoteResourceNotCreatedException, "You must call createRemote before calling this method"
     def bind(self, event, handlerFunction):
-        self.eventHandlers[event] = handlerFunction
+        #create list of event handlers for this event if it doesn't exist already
+        #otherwise, add the event to the list of handlers
+        if not self.eventHandlers.has_key(event):
+            self.eventHandlers[event] = []
+        self.eventHandlers[event].append(handlerFunction)
+#        self.eventHandlers[event] = handlerFunction
     def remote_handleEvent(self, event):
         """Called by client when an event has been fired. """
         #update local cached data
 #        event.widget.handleEvent(event)
         #call event handler
         #TODO: support multiple handlers
-        self.eventHandlers[event.eventType](event)
+        for handler in self.eventHandlers[event.eventType]:
+            if not handler(event):
+                break
+#        self.eventHandlers[event.eventType](event)
     def remote_updateData(self, data):
         #update local cached data
         self.updateData(data)

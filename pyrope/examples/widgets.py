@@ -40,6 +40,7 @@ class DemoFrame(Frame):
         self.cancelButton = Button(run, lhsPanel, value=u"Cancel")
         self.cancelButton.bind(ButtonEvent, self.onCancelButton)
         self.okButton = Button(run, lhsPanel, value=u"OK", default=True)
+        self.okButton.bind(ButtonEvent, self.onOKButtonPrebind)
         self.okButton.bind(ButtonEvent, self.onOKButton)
 #        self.bind(CloseEvent, self.onClose)
 
@@ -116,6 +117,10 @@ class DemoFrame(Frame):
             self.label.syncWithLocal()
         self.text.syncWithRemote().addCallback(_done)
         
+    def onOKButtonPrebind(self, event):
+        #demonstrates passing the event on to the next handler
+        return True
+
     def onOKButton(self, event):
         def _done(result):
             self.text.value = u"Clicked OK!"
