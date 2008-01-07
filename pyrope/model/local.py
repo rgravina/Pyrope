@@ -3,7 +3,7 @@ import wx
 from zope.interface import implements, Interface, Attribute
 from twisted.spread import pb
 from twisted.python import log
-from twisted.internet.defer import inlineCallbacks
+from twisted.internet.defer import Deferred, inlineCallbacks
 from pyrope.model.shared import *
 from pyrope.model.remote import *
 from pyrope.model.events import *
@@ -179,6 +179,35 @@ class Window(PyropeWidget):
 #    #XXX: this doesn't work for setter!
 #    backgroundColour = property(GetBackgroundColour, SetBackgroundColour)
 
+def syncWithRemote(*args):
+    """Takes a list of Pyrope Widgets and calls syncWithRemote on each, and immediately returns a Deferred. When all widgets have successfully synced, the callback 
+    sequence is fired on the deferred."""
+    #list of completed widgets
+    doneList = []
+    d = Deferred()
+    def _done(result, widget):
+        doneList.append(widget)
+        if len(doneList) is len(args):
+            d.callback(True)
+    #call syncWithRemote on each widget
+    for widget in args:
+        widget.syncWithRemote().addCallback(_done, widget)
+    return d
+
+def syncWithLocal(*args):
+    """Takes a list of Pyrope Widgets and calls syncWithLocal on each, and immediately returns a Deferred. When all widgets have successfully synced, the callback 
+    sequence is fired on the deferred."""
+    #list of completed widgets
+    doneList = []
+    d = Deferred()
+    def _done(result, widget):
+        doneList.append(widget)
+        if len(doneList) is len(args):
+            d.callback(True)
+    #call syncWithLocal on each widget
+    for widget in args:
+        widget.syncWithLocal().addCallback(_done, widget)
+    return d
 
 ######################
 # Frames and Dialogs #

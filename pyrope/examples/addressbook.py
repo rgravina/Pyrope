@@ -6,7 +6,6 @@ class AddressBookEntry:
     def __init__(self, name, email):
         self.name = name
         self.email = email
-        self.modified = False
         
 entries=[AddressBookEntry("Robert Gravina", "robert@gravina.com"), 
          AddressBookEntry("Waka Inoue", "waka@inoue.com"),
@@ -19,10 +18,15 @@ class AddressBookFrame(Frame):
         #left panel - list of address book entries
         
         leftPanel = Panel(run, self)
-        self.list = ListBox(run, leftPanel, choices=[entry.name for entry in entries], size=(150, 200))
+        listPanel = Panel(run, leftPanel)
+        self.list = ListBox(run, listPanel, choices=[entry.name for entry in entries], size=(150, 180))
         #select first entry
         self.list.selectedItem = 0
         self.list.bind(ListBoxEvent, self.onListBoxSelect)
+        
+        buttonPanel = Panel(run, listPanel, sizerType="horizontal")
+        self.addButton = Button(run, buttonPanel, value=u"+")
+        self.deleteButton = Button(run, buttonPanel, value=u"-")
 
         #right panel - address book entry form
         rightPanel = Panel(run, self, sizerType="form")
@@ -31,24 +35,27 @@ class AddressBookFrame(Frame):
         Label(run, rightPanel, value=u"Email")
         self.email = TextBox(run, rightPanel, size=(170,-1))
 
+        #buttons
+        self.saveButton = Button(run, rightPanel, value=u"Save")
+        self.saveButton.bind(ButtonEvent, self.onSave)
+        
         self.statusBar = StatusBar(run, self)
         self.statusBar.fields = {0:u"%d entires" % len(entries)}
 
     def onListBoxSelect(self, event):
         index = event.data
-        if entries[index].modified:
-            print "entry was modified"
-            entries[index].modified = False 
         self.name.value = entries[index].name 
         self.email.value = entries[index].email
-        self.name.syncWithLocal()
-        self.email.syncWithLocal()
+        syncWithLocal(self.name, self.email)
 
-#    def onText(self, event):
-#        def _done(result):
-#            index = self.list.selectedIndex
-#            entries[index].modified = True 
-#        self.list.syncWithRemote().addCallback(_done)
+    def onSave(self, event):
+        def _done(result):
+            index = self.list.selectedIndex
+            entries[index].name = self.name.value
+            entries[index].email = self.email.value
+            self.list.choices = [entry.name for entry in entries]
+            self.list.syncWithLocal()
+        syncWithRemote(self.list, self.name, self.email).addCallback(_done)
         
 class AddressBookApplication(Application):
     def __init__(self):

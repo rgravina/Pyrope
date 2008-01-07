@@ -26,9 +26,8 @@ class TickerFrame(Frame):
         
     def updateClock(self):
         self.labelDraftTime.label=self._getDraftDiffStr()
-        self.labelDraftTime.syncWithLocal()
         self.labelThesisTime.label=self._getThesisDiffStr()
-        self.labelThesisTime.syncWithLocal()
+        syncWithLocal(self.labelDraftTime, self.labelThesisTime)
 
     def _getDiffStr(self, dueDate):
         now = datetime.datetime.now()
