@@ -454,6 +454,10 @@ class ControlWithItemsMixin:
         return self.callRemote("setChoices", value)
     choices = property(_getChoices, _setChoices)
 
+    def setChoice(self, index, value):
+        self._choices[index] = value
+        return self.callRemote("setChoice", index, value)
+        
 class Choice(Window, ControlWithItemsMixin):
     type = "Choice"
     _props = {"sortAlphabetically":wx.CB_SORT}

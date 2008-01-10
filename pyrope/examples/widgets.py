@@ -114,7 +114,7 @@ class DemoFrame(Frame):
 
     def onOKButton(self, event):
         self.text.value = u"Clicked OK!"
-        self.lb.choices = ["1","2","3"]
+        self.lb.setChoice(0, "1")
         
     def onCancelButton(self, event):
         self.text.value = u"Clicked Cancel!"

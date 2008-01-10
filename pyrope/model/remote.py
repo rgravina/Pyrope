@@ -215,13 +215,14 @@ class GaugeReference(WindowReference):
 
 class ControlWithItemsReference(WindowReference):
     def remote_setSelectedIndex(self, index):
-        print "setting selection form server"
         return self.widget.SetSelection(index)
     def remote_setChoices(self, data):
         self.widget.Clear()
         for item in data:
             self.widget.Append(item)
         self.widget.Update()
+    def remote_setChoice(self, index, data):
+        self.widget.SetString(index, data)
 
 class ChoiceReference(ControlWithItemsReference):
     changeEvents = [wx.EVT_CHOICE]

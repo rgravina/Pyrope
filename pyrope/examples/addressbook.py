@@ -48,7 +48,7 @@ class AddressBookFrame(Frame):
         index = self.list.selectedIndex
         entries[index].name = self.name.value
         entries[index].email = self.email.value
-        self.list.choices = [entry.name for entry in entries]
+        self.list.setChoice(index, self.name.value)
         
 class AddressBookApplication(Application):
     def __init__(self):
