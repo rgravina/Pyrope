@@ -57,10 +57,12 @@ class PyropeWidget(pb.Referenceable):
     def __init__(self, run):
         self.run = run
         run.widgets.append(self)
-        #the remote reference will be set when the client supplies it
+        #the remote reference will be set when the client calls remote_handleEvent
         self.remote = None
         #for event handling
         self.eventHandlers = {}
+
+    #creating and calling remote side
     @inlineCallbacks
     def createRemote(self):
         #creates remote widget, and gets a pb.RemoteReference to it's client-side proxy
@@ -70,27 +72,31 @@ class PyropeWidget(pb.Referenceable):
             return self.remote.callRemote(functName, *args)
         else:
             raise RemoteResourceNotCreatedException, "You must call createRemote before calling this method"
+
+    #event handling
     def bind(self, event, handlerFunction):
+        """Adds handlerFunction to event handler list for this event type."""
+        #TODO: make a better API for event chaining and propagation        
         #create list of event handlers for this event if it doesn't exist already
         #otherwise, add the event to the list of handlers
         if not self.eventHandlers.has_key(event):
             self.eventHandlers[event] = []
         self.eventHandlers[event].append(handlerFunction)
-#        self.eventHandlers[event] = handlerFunction
-    def remote_handleEvent(self, event):
-        """Called by client when an event has been fired. """
-        #update local cached data
-#        event.widget.handleEvent(event)
+    def remote_handleEvent(self, event, changeset=None):
+        """Called by client when an event has been fired. Includes an event and changeset"""
+        #apply changeset
+        if changeset:
+            changeset.apply()
+        
+        #TODO: make a better API for event chaining and propagation        
         #call event handler
-        #TODO: support multiple handlers
         for handler in self.eventHandlers[event.eventType]:
+            # handlers return True if they have handled the event and don't want to propegate
             if not handler(event):
                 break
-#        self.eventHandlers[event.eventType](event)
-    def remote_updateData(self, data):
-        #update local cached data
-        self.updateData(data)
+
     def remote_updateRemote(self, remote):
+        """Called by client when remote handler for wxWidget is ready"""
         self.remote = remote
 
 class Window(PyropeWidget):

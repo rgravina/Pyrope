@@ -31,6 +31,29 @@ class WidgetConstructorDetails(pb.Copyable, pb.RemoteCopy):
         self.eventHandlers = eventHandlers
 pb.setUnjellyableForClass(WidgetConstructorDetails, WidgetConstructorDetails)
 
+class Changeset(pb.Copyable, pb.RemoteCopy):
+    """Describes changes to widget properties. Order of changes made is not preserved. Clear should be called after changeset has been 
+    sent to server. 
+    
+    Changeset entry: widget : (property name, value)"""
+    def __init__(self):
+        self.changes = {}
+    def addChange(self, widget, propertyName, newValue):
+        """Adds chage to changeset."""
+        self.changes[widget] = (propertyName, newValue)
+    def clear(self):
+        self.changes.clear()
+    def apply(self):
+        """Apply changes in changeset. Iterates through each change in the changeset and applies them."""
+        for widget, (propName, value) in self.changes.items():
+            setattr(widget, propName, value)
+    def isEmpty(self):
+        """@return: True is changes dict has some entires, False otherwise."""
+        if len(self.changes):
+            return False
+        return True
+pb.setUnjellyableForClass(Changeset, Changeset)
+
 class PyropeReferenceable(pb.Referenceable):
     """Subclasses pb.Referenceable so that it calls self.widget.somemethod when remote_somemethod connot be found.
     This makes it simpler to wrap methods on wxWidgets classes."""
@@ -53,16 +76,41 @@ def returnWxPythonObject(object):
  
 class WindowReference(PyropeReferenceable):
     """Manages a local wxWindow"""
+    #list of events which indicate that the data has changed in this control
+    #e.g. wx.EVT_TEXT for a TextBox. Sublasses should override this attribute
+    #so things don't break, this class has an empty list
+    changeEvents = []    
     def __init__(self, app, widget, remote, handlers):
         self.app = app           #RemoteApplicationHandler
         self.widget = widget     #wxWindow    
         self.remote = remote     #server-side Pyrope widget refernce  
         self.boundEvents = []    #bound Pyrope events, e.g. EventClose
         self.children = []       #references of children
+
+        #bind all event handlers server is interested in
         for event in handlers:
             eventClass = eval(event)
             self.boundEvents.append(eventClass)
-            self.widget.Bind(eventClass.wxEventClass, self.handleEvent)            
+            self.widget.Bind(eventClass.wxEventClass, self.handleEvent)
+
+        #we need to listen for changes to the widget, so that a changeset can be generated
+        for event in self.changeEvents:
+            self.widget.Bind(event, self.recordChange)
+            
+
+    def recordChange(self, event):
+        """Records change in changeset instance, and passes the event on to the next handler."""
+        propertyValueTuple = self.getChangeData(event)
+        if propertyValueTuple:
+            self.app.changeset.addChange(self.remote, propertyValueTuple[0], propertyValueTuple[1])
+        event.Skip()
+
+    def getChangeData(self, event):
+        """Given an event instance, this method should figure out what property should be updated with what data.
+         @return: (property name, value)"""
+         #TODO: implement something for wxWindow here
+    
+    #closing and detroying window
     def remote_Destroy(self):
         self._destroy()
     def _destroy(self):
@@ -73,9 +121,19 @@ class WindowReference(PyropeReferenceable):
         else:
             #if the programmer hasnt handled the close event specifically, then the default behaviour is to close the form
             self._destroy()
+            
+    #event handling
     def handleEvent(self, event):
+        """This gets called when an event occurs that the server is interested in. We send the server the event data and 
+        also the changes that have occurred since the last change."""
+        #get event data for this event type
         eventData = EventFactory.create(self.remote, event)
-        self.remote.callRemote("handleEvent", eventData)
+        #send event and changeset data
+        self.remote.callRemote("handleEvent", eventData, self.app.changeset)
+        #clear changeset
+        self.app.changeset.clear()
+    
+    #other methods
     def remote_Centre(self, direction, centreOnScreen): 
         dir = direction
         if centreOnScreen:
@@ -113,12 +171,14 @@ class TextEntryDialogReference(DialogReference):
 #    pass
 
 class TextBoxReference(WindowReference):
+    changeEvents = [wx.EVT_TEXT]
+    def getChangeData(self, event):
+        if event.GetEventType() == wx.EVT_TEXT.typeId:
+            return ("value", self.widget.GetValue())
     def remote_getData(self):
         return self.widget.GetValue()
     def remote_setData(self, data):
         return self.widget.SetValue(data)
-#    def onText(self, event):
-#        self.remote.callRemote("updateData", self.widget.GetValue())
 
 class LabelReference(WindowReference):
     def remote_getData(self):
@@ -149,7 +209,6 @@ class ControlWithItemsReference(WindowReference):
 
 class MenuBarReference(WindowReference):
     def onMenu(self, event):
-        print "item selected"
         print event.GetEventObject()
 
 class MenuItemReference(object):
@@ -441,7 +500,8 @@ class NotebookBuilder(WidgetBuilder):
         for title, page in pages:
             pageWidget = app.widgets[page] 
             nb.AddPage(pageWidget, title)
-            
+        return localRef
+    
 ##################
 # Widget Factory #
 ##################
@@ -454,14 +514,19 @@ class WidgetFactory(object):
         builder.replaceParent(app, widgetData)
         #create the local pb.Referenceable that will manage this widget
         return builder.createLocalReference(app, widgetData)
-
+        #add to list of localrefs
+#        app.localRefs.append(localRef)
+#        return localRef
+    
 class RemoteApplicationHandler(pb.Referenceable):
     def __init__(self, app, appPresenter):
         self.app = app
         self.appPresenter = appPresenter
         #only for wx.Frame and wx.Dialog
-        self.topLevelWindows = []
-        self.widgets = {}
+        self.topLevelWindows = []    #wxWidgets
+        self.widgets = {}            #RemoteReference (Pyrope Widget) -> wxWidget
+#        self.localRefs = []         #local references for widgets
+        self.changeset = Changeset() #when changes are pending, this should hold them
     def shutdown(self):
         def _shutdown(result):
             self.appPresenter.shutdownApplication(self.app)

@@ -112,10 +112,8 @@ class DemoFrame(Frame):
         self.statusBar.syncWithLocal()
     
     def onText(self, event):
-        def _done(result):
-            self.label.label = self.text.value
-            self.label.syncWithLocal()
-        self.text.syncWithRemote().addCallback(_done)
+        self.label.label = self.text.value
+        self.label.syncWithLocal()
         
     def onOKButtonPrebind(self, event):
         #demonstrates passing the event on to the next handler
