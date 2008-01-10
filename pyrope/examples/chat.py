@@ -9,15 +9,11 @@ class ChatFrame(Frame):
         self.btnSend.bind(ButtonEvent, self.onSendButton)
 
     def onSendButton(self, event):
-        def _done(result):
-            #update all clients chatlogs
-            for app in self.run.app.runningApplications.values():
-                app.frame.chatLog.value += self.run.username + ": " + self.chatInput.value + "\n"
-                app.frame.chatLog.syncWithLocal()                
-            #clear input textbox
-            self.chatInput.value = ""
-            self.chatInput.syncWithLocal()
-        self.chatInput.syncWithRemote().addCallback(_done)
+        #update all clients chatlogs
+        for app in self.run.app.runningApplications.values():
+            app.frame.chatLog.value += self.run.username + ": " + self.chatInput.value + "\n"
+        #clear input textbox
+        self.chatInput.value = ""
 
 class ChatApplication(Application):
     def __init__(self):
@@ -29,7 +25,6 @@ class ChatApplication(Application):
             username = run.username
             for app in self.runningApplications.values():
                 app.frame.chatLog.value += username + " logged in.\n"
-                app.frame.chatLog.syncWithLocal()
 
         def _gotUsername((result, value)):
             #now we have username, log user in

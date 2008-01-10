@@ -20,8 +20,6 @@ class AddressBookFrame(Frame):
         leftPanel = Panel(run, self)
         listPanel = Panel(run, leftPanel)
         self.list = ListBox(run, listPanel, choices=[entry.name for entry in entries], size=(150, 180))
-        #select first entry
-        self.list.selectedItem = 0
         self.list.bind(ListBoxEvent, self.onListBoxSelect)
         
         buttonPanel = Panel(run, listPanel, sizerType="horizontal")
@@ -39,23 +37,18 @@ class AddressBookFrame(Frame):
         self.saveButton = Button(run, rightPanel, value=u"Save")
         self.saveButton.bind(ButtonEvent, self.onSave)
         
-        self.statusBar = StatusBar(run, self)
-        self.statusBar.fields = {0:u"%d entires" % len(entries)}
+        self.statusBar = StatusBar(run, self, fields={0:u"%d entires" % len(entries)})
 
     def onListBoxSelect(self, event):
         index = event.data
         self.name.value = entries[index].name 
         self.email.value = entries[index].email
-        syncWithLocal(self.name, self.email)
 
     def onSave(self, event):
-        def _done(result):
-            index = self.list.selectedIndex
-            entries[index].name = self.name.value
-            entries[index].email = self.email.value
-            self.list.choices = [entry.name for entry in entries]
-            self.list.syncWithLocal()
-        syncWithRemote(self.list, self.name, self.email).addCallback(_done)
+        index = self.list.selectedIndex
+        entries[index].name = self.name.value
+        entries[index].email = self.email.value
+        self.list.choices = [entry.name for entry in entries]
         
 class AddressBookApplication(Application):
     def __init__(self):

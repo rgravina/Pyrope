@@ -52,7 +52,8 @@ class Application(pb.Viewable):
         """Subclasses should put any shutdown code here"""
         pass
         
-class PyropeWidget(pb.Referenceable):
+class PyropeWidget(pb.Referenceable, object):
+    """Base class for Pyrope widgets. Sublcasses object because we want to use properties (new style classes only)."""
     type = "PyropeWidget"
     def __init__(self, run):
         self.run = run
@@ -72,6 +73,10 @@ class PyropeWidget(pb.Referenceable):
             return self.remote.callRemote(functName, *args)
         else:
             raise RemoteResourceNotCreatedException, "You must call createRemote before calling this method"
+    def remote_updateRemote(self, remote):
+        """Called by client when remote handler for wxWidget is ready"""
+        self.remote = remote
+
 
     #event handling
     def bind(self, event, handlerFunction):
@@ -91,13 +96,9 @@ class PyropeWidget(pb.Referenceable):
         #TODO: make a better API for event chaining and propagation        
         #call event handler
         for handler in self.eventHandlers[event.eventType]:
-            # handlers return True if they have handled the event and don't want to propegate
+            # handlers return True if they want event to propegate
             if not handler(event):
                 break
-
-    def remote_updateRemote(self, remote):
-        """Called by client when remote handler for wxWidget is ready"""
-        self.remote = remote
 
 class Window(PyropeWidget):
     type = "Window"
@@ -148,17 +149,12 @@ class Window(PyropeWidget):
         for child in self.children:
             children.append(child.getConstructorDetails())
         return children
-#    def handleEvent(self, event):
-#        """Default response to an event is to ignore it. Implement useful behaviour in subsclasses (e.g. for TextBox, on a EventText, update the textboxes value attribute)"""
-#        pass
-#    def updateData(self, data):
-#        pass
-    def syncWithRemote(self):
-        def _done(data):
-            self.setData(data)
-        return self.callRemote("getData").addCallback(_done)
-    def syncWithLocal(self):
-        return self.callRemote("setData", self.getData())
+#    def syncWithRemote(self):
+#        def _done(data):
+#            self.setData(data)
+#        return self.callRemote("getData").addCallback(_done)
+#    def syncWithLocal(self):
+#        return self.callRemote("setData", self.getData())
     def clientToScreen(self, point):
         return self.callRemote("ClientToScreen", point)
     def hide(self):
@@ -167,6 +163,8 @@ class Window(PyropeWidget):
         return self.callRemote("Show")
     def centre(self, direction=wx.BOTH, centreOnScreen=False):
         return self.callRemote("Centre", direction, centreOnScreen)
+    def close(self):
+        return self.callRemote("Close")
     def destroy(self):
         return self.callRemote("Destroy")
     def disable(self):
@@ -185,35 +183,40 @@ class Window(PyropeWidget):
 #    #XXX: this doesn't work for setter!
 #    backgroundColour = property(GetBackgroundColour, SetBackgroundColour)
 
-def syncWithRemote(*args):
-    """Takes a list of Pyrope Widgets and calls syncWithRemote on each, and immediately returns a Deferred. When all widgets have successfully synced, the callback 
-    sequence is fired on the deferred."""
-    #list of completed widgets
-    doneList = []
-    d = Deferred()
-    def _done(result, widget):
-        doneList.append(widget)
-        if len(doneList) is len(args):
-            d.callback(True)
-    #call syncWithRemote on each widget
-    for widget in args:
-        widget.syncWithRemote().addCallback(_done, widget)
-    return d
-
-def syncWithLocal(*args):
-    """Takes a list of Pyrope Widgets and calls syncWithLocal on each, and immediately returns a Deferred. When all widgets have successfully synced, the callback 
-    sequence is fired on the deferred."""
-    #list of completed widgets
-    doneList = []
-    d = Deferred()
-    def _done(result, widget):
-        doneList.append(widget)
-        if len(doneList) is len(args):
-            d.callback(True)
-    #call syncWithLocal on each widget
-    for widget in args:
-        widget.syncWithLocal().addCallback(_done, widget)
-    return d
+#def syncWithRemote(*args):
+#    """Takes a list of Pyrope Widgets and calls syncWithRemote on each, and immediately returns a Deferred. When all widgets have successfully synced, the callback 
+#    sequence is fired on the deferred."""
+#    #list of completed widgets
+#    doneList = []
+#    d = Deferred()
+#    def _done(result, widget):
+#        doneList.append(widget)
+#        if len(doneList) is len(args):
+#            d.callback(True)
+#    #call syncWithRemote on each widget
+#    for widget in args:
+#        widget.syncWithRemote().addCallback(_done, widget)
+#    return d
+#
+#def syncWithLocal(*args):
+#    """Takes a list of Pyrope Widgets and calls syncWithLocal on each, and immediately returns a Deferred. When all widgets have successfully synced, the callback 
+#    sequence is fired on the deferred."""
+#    #list of completed widgets
+#    doneList = []
+#    d = Deferred()
+#    def _done(result, widget):
+#        doneList.append(widget)
+#        if len(doneList) is len(args):
+#            d.callback(True)
+#    #call syncWithLocal on each widget
+#    for widget in args:
+#        widget.syncWithLocal().addCallback(_done, widget)
+#    return d
+#
+#def sync(run):
+#    """Updates client based on server changset"""
+#    print "syncing"
+#    print run.changeset.changes
 
 ######################
 # Frames and Dialogs #
@@ -354,7 +357,7 @@ class TextBox(Window):
     def __init__(self, run, parent, value=u"", position=DefaultPosition, size=DefaultSize,
                  justification="left", multiline=False, readonly=False, password=False, processEnter=False):
         Window.__init__(self, run, parent, position=position, size=size)
-        self.value = value
+        self._value = value
         self._addStyleVal(multiline, "multiline")
         self._addStyleVal(readonly, "readonly")
         self._addStyleVal(password, "password")
@@ -364,18 +367,27 @@ class TextBox(Window):
         self._addStyleVal(processEnter, "processEnter")
     def _getConstructorData(self):
         d = Window._getConstructorData(self)
-        d["value"] = self.value
+        d["value"] = self._value
         return d
-    def setData(self, data):
-        self.value = data
-    def getData(self):
-        return self.value
+
+    def _getValue(self):
+        return self._value
+    def _setValue(self, value):
+        self._value = value
+        return self.callRemote("setValue", value)
+    value = property(_getValue, _setValue)
+    
+#    def setData(self, data):
+#        self.value = data
+#    def getData(self):
+#        return self.value
 #    def handleEvent(self, event):
 #        #TODO: check the event type, handle accordingly, throw exceptions if it can't handle it
 #        self.value = event.data
 #    def updateData(self, data):
 #        #TODO: check the event type, handle accordingly, throw exceptions if it can't handle it
 #        self.value = data
+
 class Label(Window):
     type = "Label"
     _props = {"left":wx.ALIGN_LEFT,
@@ -384,25 +396,21 @@ class Label(Window):
     def __init__(self, run, parent, value=u"", position=DefaultPosition, size=DefaultSize,
                  justification="left"):
         Window.__init__(self, run, parent, position=position, size=size)
-        self.label = value
+        self._label = value
         self._addStyleVal(justification == "left", "left")
         self._addStyleVal(justification == "centre", "centre")
         self._addStyleVal(justification == "right", "right")
     def _getConstructorData(self):
         d = Window._getConstructorData(self)
-        d["label"] = self.label
+        d["label"] = self._label
         return d
-    def setData(self, data):
-        self.label = data
-    def getData(self):
-        return self.label
-#    def setValue(self, label):
-#        #set the local background colour
-#        self.label = label
-#        #set remote
-#        return self.callRemote("SetLabel", label)
-#    def handleEvent(self, event):
-#        self.label = event.data
+
+    def _getValue(self):
+        return self._label
+    def _setValue(self, value):
+        self._label = value
+        return self.callRemote("setLabel", value)
+    label = property(_getValue, _setValue)
 
 class Button(Window):
     type = "Button"
@@ -431,43 +439,51 @@ class BitmapButton(Window):
         d["default"] = self.default
         return d
 
-class Choice(Window):
+class ControlWithItemsMixin:
+    def _getSelectedIndex(self):
+        return self._selectedIndex
+    def _setSelectedIndex(self, value):
+        self._selectedIndex = value
+        return self.callRemote("setSelectedIndex", value)
+    selectedIndex = property(_getSelectedIndex, _setSelectedIndex)
+
+    def _getChoices(self):
+        return self._choices
+    def _setChoices(self, value):
+        self._choices = value
+        return self.callRemote("setChoices", value)
+    choices = property(_getChoices, _setChoices)
+
+class Choice(Window, ControlWithItemsMixin):
     type = "Choice"
     _props = {"sortAlphabetically":wx.CB_SORT}
     def __init__(self, run, parent, choices=[], 
                  sortAlphabetically=False):
         Window.__init__(self, run, parent)
-        self.choices = choices
+        self._selectedIndex = 0
+        self._choices = choices
         self._addStyleVal(sortAlphabetically, "sortAlphabetically")
-        self.selectedIndex = 0
     def _getConstructorData(self):
         d = Window._getConstructorData(self)
-        d["choices"] = self.choices
+        d["choices"] = self._choices
         return d
-    def setData(self, data):
-        self.selectedIndex = data
-    def getData(self):
-        return self.choices
 
-class ListBox(Window):
+class ListBox(Window, ControlWithItemsMixin):
     type = "ListBox"
     _props = {"sortAlphabetically":wx.LB_SORT,
               "multipleSelection":wx.LB_MULTIPLE}
     def __init__(self, run, parent, choices=[], position=DefaultPosition, size=DefaultSize,
                  multipleSelection=False, sortAlphabetically=False):
         Window.__init__(self, run, parent, position=position, size=size)
-        self.choices = choices
+        self._selectedIndex = None
+        self._choices = choices
         self._addStyleVal(sortAlphabetically, "sortAlphabetically")
         self._addStyleVal(multipleSelection, "multipleSelection")
-        self.selectedIndex = None
     def _getConstructorData(self):
         d = Window._getConstructorData(self)
-        d["choices"] = self.choices
+        d["choices"] = self._choices
         return d
-    def setData(self, data):
-        self.selectedIndex = data
-    def getData(self):
-        return self.choices
+
 
 class CheckListBox(ListBox):
     type = "CheckListBox"
@@ -684,19 +700,21 @@ class ToolBar(Window):
 
 class StatusBar(Window):
     type = "StatusBar"
-    def __init__(self, run, parent, numFields=1):
+    def __init__(self, run, parent, fields={}):
         Window.__init__(self, run, parent)
-        self.numFields = numFields
-        self.fields = {}    #index->text
+        self._fields = fields    #index->text
     def _getConstructorData(self):
         return {"parent":self.parent}
     def _getOtherData(self):
-        return {"numFields":self.numFields, "fields":self.fields}
-    def setData(self, data):
-        pass
-    def getData(self):
-        return self._getOtherData()
+        return {"fields":self._fields}
 
+    def _getFields(self):
+        return self._fields
+    def _setFields(self, value):
+        self._fields = value
+        return self.callRemote("setFields", value)
+    fields = property(_getFields, _setFields)
+ 
 class Image(Window):
     type = "Image"
     def __init__(self, run, parent, path):

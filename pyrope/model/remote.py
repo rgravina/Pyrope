@@ -31,7 +31,7 @@ class WidgetConstructorDetails(pb.Copyable, pb.RemoteCopy):
         self.eventHandlers = eventHandlers
 pb.setUnjellyableForClass(WidgetConstructorDetails, WidgetConstructorDetails)
 
-class Changeset(pb.Copyable, pb.RemoteCopy):
+class ClientChangeset(pb.Copyable):
     """Describes changes to widget properties. Order of changes made is not preserved. Clear should be called after changeset has been 
     sent to server. 
     
@@ -43,16 +43,35 @@ class Changeset(pb.Copyable, pb.RemoteCopy):
         self.changes[widget] = (propertyName, newValue)
     def clear(self):
         self.changes.clear()
-    def apply(self):
-        """Apply changes in changeset. Iterates through each change in the changeset and applies them."""
-        for widget, (propName, value) in self.changes.items():
-            setattr(widget, propName, value)
     def isEmpty(self):
         """@return: True is changes dict has some entires, False otherwise."""
         if len(self.changes):
             return False
         return True
-pb.setUnjellyableForClass(Changeset, Changeset)
+class ServerChangeset(pb.RemoteCopy):
+    """Server-side RemoteCopy of ClientChangeset. Call apply() when you want to apply chages."""
+    def apply(self):
+        """Apply changes in changeset. Iterates through each change in the changeset and applies them.
+        
+        Note: This method assumes Python properties are used to access Prope Widget attributes that need to update the client side when changed. 
+        If the client asked to update property "foo", setting foo directly will cause it to update the client-side again!, so, it assumes 
+        for every foo there is a "_foo" attribute where the value is stored. This really should be done in a better way, but for now, it works provided 
+        widgets stick to this naming convention:
+        
+        e.g.
+        
+        class TextBox(Window):
+        ...
+        def _getValue(self):
+            return self._value
+        def _setValue(self, value):
+            self._value = value
+            return self.callRemote("setValue", value)
+        value = property(_getValue, _setValue)
+        """
+        for widget, (propName, value) in self.changes.items():
+            setattr(widget, "_"+propName, value)
+pb.setUnjellyableForClass(ClientChangeset, ServerChangeset)
 
 class PyropeReferenceable(pb.Referenceable):
     """Subclasses pb.Referenceable so that it calls self.widget.somemethod when remote_somemethod connot be found.
@@ -96,7 +115,6 @@ class WindowReference(PyropeReferenceable):
         #we need to listen for changes to the widget, so that a changeset can be generated
         for event in self.changeEvents:
             self.widget.Bind(event, self.recordChange)
-            
 
     def recordChange(self, event):
         """Records change in changeset instance, and passes the event on to the next handler."""
@@ -119,7 +137,7 @@ class WindowReference(PyropeReferenceable):
         if CloseEvent in self.boundEvents:
             self.handleEvent(event)
         else:
-            #if the programmer hasnt handled the close event specifically, then the default behaviour is to close the form
+            #if the programmer hasn't handled the close event specifically, then the default behaviour is to close the form
             self._destroy()
             
     #event handling
@@ -129,8 +147,12 @@ class WindowReference(PyropeReferenceable):
         #get event data for this event type
         eventData = EventFactory.create(self.remote, event)
         #send event and changeset data
-        self.remote.callRemote("handleEvent", eventData, self.app.changeset)
-        #clear changeset
+        changeset = None
+        if not self.app.changeset.isEmpty():
+            changeset = self.app.changeset
+        self.remote.callRemote("handleEvent", eventData, changeset)
+        #clear changeset now that server knows about it
+        #TODO: return a Deferred, and fire it off when server-side handleEvent is done, so the changeset is cleared only when done
         self.app.changeset.clear()
     
     #other methods
@@ -155,8 +177,6 @@ class TopLevelWindowReference(WindowReference):
 
 class FrameReference(TopLevelWindowReference):
     pass
-#class SizedFrameReference(TopLevelWindowReference):
-#    pass
 
 class DialogReference(TopLevelWindowReference):
     def remote_ShowModal(self):
@@ -167,30 +187,25 @@ class TextEntryDialogReference(DialogReference):
         id = self.widget.ShowModal()
         val = self.widget.GetValue()
         return (id, val)
-#class PanelReference(WindowReference):
-#    pass
 
 class TextBoxReference(WindowReference):
     changeEvents = [wx.EVT_TEXT]
     def getChangeData(self, event):
         if event.GetEventType() == wx.EVT_TEXT.typeId:
             return ("value", self.widget.GetValue())
-    def remote_getData(self):
-        return self.widget.GetValue()
-    def remote_setData(self, data):
-        return self.widget.SetValue(data)
+
+    def remote_setValue(self, value):
+        return self.widget.SetValue(value)
 
 class LabelReference(WindowReference):
-    def remote_getData(self):
-        return self.widget.GetLabel()
-    def remote_setData(self, data):
-        return self.widget.SetLabel(data)
+    def remote_setLabel(self, label):
+        return self.widget.SetLabel(label)
 
 class SliderReference(WindowReference):
-    def remote_getData(self):
-        return self.widget.GetValue()
-    def remote_setData(self, data):
-        return self.widget.SetValue(data)
+    changeEvents = [wx.EVT_SCROLL_CHANGED]
+    def getChangeData(self, event):
+        if event.GetEventType() == wx.wx.EVT_SCROLL_CHANGED.typeId:
+            return ("value", self.widget.GetValue())
 
 class GaugeReference(WindowReference):
     def remote_getData(self):
@@ -199,14 +214,27 @@ class GaugeReference(WindowReference):
         return self.widget.SetValue(data)
 
 class ControlWithItemsReference(WindowReference):
-    def remote_getData(self):
-        return self.widget.GetSelection()
-    def remote_setData(self, data):
+    def remote_setSelectedIndex(self, index):
+        print "setting selection form server"
+        return self.widget.SetSelection(index)
+    def remote_setChoices(self, data):
         self.widget.Clear()
         for item in data:
             self.widget.Append(item)
         self.widget.Update()
 
+class ChoiceReference(ControlWithItemsReference):
+    changeEvents = [wx.EVT_CHOICE]
+    def getChangeData(self, event):
+        if event.GetEventType() == wx.wx.EVT_CHOICE.typeId:
+            return ("selectedIndex", self.widget.GetSelection())
+
+class ListBoxReference(ControlWithItemsReference):
+    changeEvents = [wx.EVT_LISTBOX]
+    def getChangeData(self, event):
+        if event.GetEventType() == wx.wx.EVT_LISTBOX.typeId:
+            return ("selectedIndex", self.widget.GetSelection())
+     
 class MenuBarReference(WindowReference):
     def onMenu(self, event):
         print event.GetEventObject()
@@ -219,11 +247,9 @@ class MenuItemReference(object):
         self.menuBarRef.remote.callRemote("menuItemSelected", self.widget.GetId())
 
 class StatusBarReference(WindowReference):
-    def remote_getData(self):
-        return self.widget.GetValue()
-    def remote_setData(self, data):
-        self.widget.SetFieldsCount(data["numFields"])
-        for index, text in data["fields"].items():
+    def remote_setFields(self, fields):
+        self.widget.SetFieldsCount(len(fields))
+        for index, text in fields.items():
             self.widget.SetStatusText(text, index)
         
 ############
@@ -347,7 +373,7 @@ class BitmapButtonBuilder(ButtonBuilder):
 
 class ChoiceBuilder(WidgetBuilder):
     widgetClass = wx.Choice
-    referenceClass = ControlWithItemsReference
+    referenceClass = ChoiceReference
 
 class CheckBoxBuilder(WidgetBuilder):
     widgetClass = wx.CheckBox
@@ -368,7 +394,7 @@ class SliderBuilder(WidgetBuilder):
 
 class ListBoxBuilder(WidgetBuilder):
     widgetClass = wx.ListBox
-    referenceClass = ControlWithItemsReference
+    referenceClass = ListBoxReference
 
 class CheckListBoxBuilder(WidgetBuilder):
     widgetClass = wx.CheckListBox
@@ -428,7 +454,6 @@ class ToolBarBuilder(WidgetBuilder):
     def createLocalReference(self, app, widgetData):
         localRef = WidgetBuilder.createLocalReference(self, app, widgetData)
         widget = localRef.widget
-#        bitmap = wx.Bitmap("images/dot-red.png", wx.BITMAP_TYPE_PNG)
         for label, image in widgetData.otherData["tools"]:
             stream = cStringIO.StringIO(image)
             bitmap = BitmapFromImage(ImageFromStream(stream))
@@ -449,7 +474,7 @@ class StatusBarBuilder(WidgetBuilder):
     def createLocalReference(self, app, widgetData):
         localRef = WidgetBuilder.createLocalReference(self, app, widgetData)
         widget = localRef.widget
-        widget.SetFieldsCount(widgetData.otherData["numFields"])
+        widget.SetFieldsCount(len(widgetData.otherData["fields"]))
         for index, text in widgetData.otherData["fields"].items():
             widget.SetStatusText(text, index)
         frame = widgetData.constructorData["parent"]
@@ -514,9 +539,6 @@ class WidgetFactory(object):
         builder.replaceParent(app, widgetData)
         #create the local pb.Referenceable that will manage this widget
         return builder.createLocalReference(app, widgetData)
-        #add to list of localrefs
-#        app.localRefs.append(localRef)
-#        return localRef
     
 class RemoteApplicationHandler(pb.Referenceable):
     def __init__(self, app, appPresenter):
@@ -525,15 +547,13 @@ class RemoteApplicationHandler(pb.Referenceable):
         #only for wx.Frame and wx.Dialog
         self.topLevelWindows = []    #wxWidgets
         self.widgets = {}            #RemoteReference (Pyrope Widget) -> wxWidget
-#        self.localRefs = []         #local references for widgets
-        self.changeset = Changeset() #when changes are pending, this should hold them
+        self.changeset = ClientChangeset() #when changes are pending, this should hold them
     def shutdown(self):
         def _shutdown(result):
             self.appPresenter.shutdownApplication(self.app)
         return self.app.server.callRemote("shutdownApplication", self).addCallback(_shutdown)
     def remote_createWidget(self, widgetData):
-        #create widget and local proxy
-        #return pb.RemoteReference to server
+        #create widget and local proxy and return pb.RemoteReference to server
         return WidgetFactory.create(self, widgetData)
 
 class PyropeClientHandler(pb.Referenceable):

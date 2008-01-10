@@ -27,7 +27,6 @@ class TickerFrame(Frame):
     def updateClock(self):
         self.labelDraftTime.label=self._getDraftDiffStr()
         self.labelThesisTime.label=self._getThesisDiffStr()
-        syncWithLocal(self.labelDraftTime, self.labelThesisTime)
 
     def _getDiffStr(self, dueDate):
         now = datetime.datetime.now()
@@ -50,7 +49,7 @@ class TickerFrame(Frame):
         return self._getDiffStr(self.thesisDueDate)
 
     def onButton(self, event):
-        self.callRemote("Close")
+        self.close()
 
     def onClose(self, event):
         self.stopClock()

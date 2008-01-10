@@ -35,28 +35,28 @@ class EventFactory(object):
 
     @classmethod
     def _getButtonEvent(self, remote, wxEvent):
-            return Event(remote, ButtonEvent)
+        return Event(remote, ButtonEvent)
     @classmethod
     def _getTextEvent(self, remote, wxEvent):
-            return Event(remote, TextEvent)
+        return Event(remote, TextEvent)
     @classmethod
     def _getTextEnterEvent(self, remote, wxEvent):
-            return Event(remote, TextEnterEvent)
+        return Event(remote, TextEnterEvent)
     @classmethod
     def _getCloseEvent(self, remote, wxEvent):
-            return Event(remote, CloseEvent)
+        return Event(remote, CloseEvent)
     @classmethod
     def _getScrollEvent(self, remote, wxEvent):
-            return Event(remote, ScrollEvent)
+        return Event(remote, ScrollEvent)
     @classmethod
     def _getListBoxEvent(self, remote, wxEvent):
-            return Event(remote, ListBoxEvent, data=wxEvent.GetSelection())
+        return Event(remote, ListBoxEvent, data=wxEvent.GetSelection())
     @classmethod
     def _getNotebookPageChangedEvent(self, remote, wxEvent):
-            return Event(remote, NotebookPageChangedEvent, data={"selection":wxEvent.GetSelection(), "oldSelection":wxEvent.GetOldSelection()})
+        return Event(remote, NotebookPageChangedEvent, data={"selection":wxEvent.GetSelection(), "oldSelection":wxEvent.GetOldSelection()})
     @classmethod
     def _getNotebookPageChangingEvent(self, remote, wxEvent):
-            return Event(remote, NotebookPageChangingEvent, data={"selection":wxEvent.GetSelection(), "oldSelection":wxEvent.GetOldSelection()})
+        return Event(remote, NotebookPageChangingEvent, data={"selection":wxEvent.GetSelection(), "oldSelection":wxEvent.GetOldSelection()})
 
 class ButtonEvent(object):
     type = "ButtonEvent"

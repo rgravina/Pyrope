@@ -64,10 +64,9 @@ class DemoFrame(Frame):
         image = Image(run, rhsPanel2, "images/pyrope.png")
         
         bottomPanel = Panel(run, self, sizerType="vertical")
-        output = TextBox(run, bottomPanel, value=u"Widget ouput...", size=(400,100), readonly=True, multiline=True)
+        self.output = TextBox(run, bottomPanel, value=u"Widget ouput...\n", size=(400,100), readonly=True, multiline=True)
 
-        self.statusBar = StatusBar(run, self)
-        self.statusBar.fields = {0:u"demo online"}
+        self.statusBar = StatusBar(run, self, fields={0:u"demo online"})
 
         splitter = Splitter(run, self, minimumPaneSize=20, liveUpdate=True)
         splitterPanel1 = Panel(run, splitter, sizerType="vertical")
@@ -93,51 +92,37 @@ class DemoFrame(Frame):
 
     def onNotebookChanging(self, event):
         self.label.label = u"Notebook changing from %d to %d" % (event.data["oldSelection"], event.data["selection"])
-        self.label.syncWithLocal()
         
     def onNotebookChanged(self, event):
         self.label.label = u"Notebook changed from %d to %d" % (event.data["oldSelection"], event.data["selection"])
-        self.label.syncWithLocal()
         
     def onItem1(self):
         self.label.label = u"Item 1 selected"
-        self.label.syncWithLocal()
         self.statusBar.fields = {0:u"Item 1 selected"}
-        self.statusBar.syncWithLocal()
 
     def onItem2(self):
         self.label.label = u"Item 2 selected"
-        self.label.syncWithLocal()
         self.statusBar.fields = {0:u"Item 2 selected"}
-        self.statusBar.syncWithLocal()
     
     def onText(self, event):
         self.label.label = self.text.value
-        self.label.syncWithLocal()
         
     def onOKButtonPrebind(self, event):
         #demonstrates passing the event on to the next handler
+        self.output.value += u"Dropdown selection: %s\n" % self.choice.choices[self.choice.selectedIndex]
         return True
 
     def onOKButton(self, event):
-        def _done(result):
-            self.text.value = u"Clicked OK!"
-            self.lb.choices = ["1","2","3"]
-            self.text.syncWithLocal()
-            self.lb.syncWithLocal()
-        self.text.syncWithRemote().addCallback(_done)
+        self.text.value = u"Clicked OK!"
+        self.lb.choices = ["1","2","3"]
         
     def onCancelButton(self, event):
         self.text.value = u"Clicked Cancel!"
         self.lb.choices = ["one","two","three"]
-        self.text.syncWithLocal()
-        self.lb.syncWithLocal()
-
+ 
     def onScroll(self, event):
-        def _done(result):
-            self.gauge.value = self.slider.value
-            self.gauge.syncWithLocal()
-        self.slider.syncWithRemote().addCallback(_done)
+        self.gauge.value = self.slider.value
+        print self.slider.value
 
     def onClose(self, event):
         def _done(result):
