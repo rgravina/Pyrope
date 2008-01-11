@@ -8,8 +8,8 @@ class AddressBookEntry:
         self.email = email
         
 entries=[AddressBookEntry("Robert Gravina", "robert@gravina.com"), 
-         AddressBookEntry("Waka Inoue", "waka@inoue.com"),
-         AddressBookEntry("Misaki Ito", "misaki@ito.com")]
+         AddressBookEntry("Yukihiro Matsumoto", "yukihiro@ruby.org"),
+         AddressBookEntry("Guido van Rossum", "guido@python.org")]
 
 class AddressBookFrame(Frame):
     def __init__(self, run, parent):
