@@ -13,28 +13,26 @@ entries=[AddressBookEntry("Robert Gravina", "robert@gravina.com"),
 
 class AddressBookFrame(Frame):
     def __init__(self, run, parent):
-        Frame.__init__(self, run, parent, title=u"Address Book")
+        Frame.__init__(self, run, parent, title=u"Address Book", sizerType="vertical")
 
         #left panel - list of address book entries
-        
-        leftPanel = Panel(run, self)
-        listPanel = Panel(run, leftPanel)
+        listPanel = Panel(run, self, sizerType="horizontal")
         self.list = ListBox(run, listPanel, choices=[entry.name for entry in entries], size=(150, 180))
         self.list.bind(ListBoxEvent, self.onListBoxSelect)
-        
-        buttonPanel = Panel(run, listPanel, sizerType="horizontal")
-        self.addButton = Button(run, buttonPanel, value=u"+")
-        self.deleteButton = Button(run, buttonPanel, value=u"-")
-
         #right panel - address book entry form
-        rightPanel = Panel(run, self, sizerType="form")
+        rightPanel = Panel(run, listPanel, sizerType="form")
         Label(run, rightPanel, value=u"Name")
         self.name = TextBox(run, rightPanel, size=(170,-1))
         Label(run, rightPanel, value=u"Email")
         self.email = TextBox(run, rightPanel, size=(170,-1))
 
         #buttons
-        self.saveButton = Button(run, rightPanel, value=u"Save")
+        buttonPanel = Panel(run, self, sizerType="horizontal")
+        self.addButton = Button(run, buttonPanel, value=u"+")
+        self.addButton.bind(ButtonEvent, self.onAddButton)
+        self.deleteButton = Button(run, buttonPanel, value=u"-")
+        self.deleteButton.bind(ButtonEvent, self.onDeleteButton)
+        self.saveButton = Button(run, buttonPanel, value=u"Save")
         self.saveButton.bind(ButtonEvent, self.onSave)
         
         self.statusBar = StatusBar(run, self, fields={0:u"%d entires" % len(entries)})
@@ -50,6 +48,21 @@ class AddressBookFrame(Frame):
         entries[index].email = self.email.value
         self.list.setChoice(index, self.name.value)
         
+    def onAddButton(self, event):
+        entries.append(AddressBookEntry("", ""))
+        self.list.append("")
+        self.list.selectedIndex = len(entries)-1
+        self.clearControls()
+        
+    def onDeleteButton(self, event):
+        index = self.list.selectedIndex
+        del entries[index]
+        self.list.delete(index)
+        self.clearControls()
+
+    def clearControls(self):
+        self.name.value = ""
+        self.email.value = ""
 class AddressBookApplication(Application):
     def __init__(self):
         Application.__init__(self, "Address Book", description="A basic address book application.")

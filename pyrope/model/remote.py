@@ -223,6 +223,10 @@ class ControlWithItemsReference(WindowReference):
         self.widget.Update()
     def remote_setChoice(self, index, data):
         self.widget.SetString(index, data)
+    def remote_append(self, data):
+        self.widget.Append(data)
+    def remote_delete(self, index):
+        self.widget.Delete(index)
 
 class ChoiceReference(ControlWithItemsReference):
     changeEvents = [wx.EVT_CHOICE]

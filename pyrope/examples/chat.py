@@ -3,7 +3,8 @@ from pyrope.model import *
 class ChatFrame(Frame):
     def __init__(self, run, parent):
         Frame.__init__(self, run, parent, title=u"Chat", sizerType="vertical")
-        self.chatLog = TextBox(run, self, size=(380, 150), multiline=True, readonly=True)
+        self.chatLog = TextBox(run, self, size=(380, 150), 
+                               multiline=True, readonly=True)
         self.chatInput = TextBox(run, self, size=(380, -1))
         self.btnSend = Button(run, self, value=u"Send")
         self.btnSend.bind(ButtonEvent, self.onSendButton)
@@ -11,7 +12,8 @@ class ChatFrame(Frame):
     def onSendButton(self, event):
         #update all clients chatlogs
         for app in self.run.app.runningApplications.values():
-            app.frame.chatLog.value += self.run.username + ": " + self.chatInput.value + "\n"
+            app.chatFrame.chatLog.value += self.run.username + ": " \
+                                    + self.chatInput.value + "\n"
         #clear input textbox
         self.chatInput.value = ""
 
@@ -20,18 +22,18 @@ class ChatApplication(Application):
         Application.__init__(self, "Chat", description="A simple chat application which demonstrates multi-user applications.")
     def start(self, run):
         def _frameDone(result):
-            run.frame.centre()
-            run.frame.show()
+            run.chatFrame.centre()
+            run.chatFrame.show()
             username = run.username
             for app in self.runningApplications.values():
-                app.frame.chatLog.value += username + " logged in.\n"
+                app.chatFrame.chatLog.value += username + " logged in.\n"
 
         def _gotUsername((result, value)):
             #now we have username, log user in
             run.username = value                
             #create a frame on the client
-            run.frame.createRemote().addCallback(_frameDone)
-        run.frame = ChatFrame(run, None)
+            run.chatFrame.createRemote().addCallback(_frameDone)
+        run.chatFrame = ChatFrame(run, None)
 
         def _tedDone(result):
             ted.showModalAndGetValue().addCallback(_gotUsername)
