@@ -1,4 +1,3 @@
-import wx
 from pyrope.server import Application
 from pyrope.model import *
  
