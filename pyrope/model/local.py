@@ -112,6 +112,10 @@ class Window(PyropeWidget):
         #other props
         self.children = []
         self.wxStyle = 0
+        
+        #wxWindow props
+        self._backgroundColour = None
+
     def getConstructorDetails(self):
         """Creates an instance of WidgetConstructorDetails, with all the details the client needs to create 
         the client-side version of this widget"""
@@ -135,10 +139,6 @@ class Window(PyropeWidget):
             self.wxStyle = self.wxStyle | self._props[attrStr]
     def _getStyleData(self):
         return self.wxStyle
-#        wxStyle=0
-        #TODO: avoid creating a new instance each time
-#        decorator = self.decoratorClass(self.styles)
-#        return decorator.toWxStyle()
     def _getEventHandlers(self):
         eventHandlers = []
         for event, fn in self.eventHandlers.items():
@@ -149,12 +149,16 @@ class Window(PyropeWidget):
         for child in self.children:
             children.append(child.getConstructorDetails())
         return children
-#    def syncWithRemote(self):
-#        def _done(data):
-#            self.setData(data)
-#        return self.callRemote("getData").addCallback(_done)
-#    def syncWithLocal(self):
-#        return self.callRemote("setData", self.getData())
+    
+    #wxWindow properties
+    def _getBackgroundColour(self):
+        return self._backgroundColour
+    def _setBackgroundColour(self, value):
+        self._backgroundColour = value
+        return self.callRemote("setBackgroundColour", value)
+    backgroundColour = property(_getBackgroundColour, _setBackgroundColour)
+
+   #wxWindow methods
     def clientToScreen(self, point):
         return self.callRemote("ClientToScreen", point)
     def hide(self):
@@ -171,19 +175,8 @@ class Window(PyropeWidget):
         return self.callRemote("Disable")
     def enable(self):
         return self.callRemote("Enable")
-
-#    def GetBackgroundColour(self):
-#        #simply return the background colour
-#        return self._backgroundColour
-#    def SetBackgroundColour(self, colour):
-#        #set the local background colour
-#        self._backgroundColour = colour
-#        #set remote
-#        return self.callRemote("SetBackgroundColour", colour)
-#    #XXX: this doesn't work for setter!
-#    backgroundColour = property(GetBackgroundColour, SetBackgroundColour)
-
-#def syncWithRemote(*args):
+    
+ #def syncWithRemote(*args):
 #    """Takes a list of Pyrope Widgets and calls syncWithRemote on each, and immediately returns a Deferred. When all widgets have successfully synced, the callback 
 #    sequence is fired on the deferred."""
 #    #list of completed widgets

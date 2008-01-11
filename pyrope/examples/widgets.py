@@ -140,10 +140,11 @@ class WidgetsApplication(Application):
     def start(self, run):
         def _done(result):
             #although Centre and Show return Deferred's, their order of execution is not important, so we can ignore them.
-            #GetBackgroundColour returns the localally cached value
             frame.centre()
             #note: frame.callRemote("Show") also works
             frame.show()
+            #test setting a wxWindow attribute
+            frame.label.backgroundColour = (255, 125, 27)
             
         #create a local representation of a frame
         frame = DemoFrame(run, None)

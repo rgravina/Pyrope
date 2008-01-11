@@ -163,9 +163,10 @@ class WindowReference(PyropeReferenceable):
         return self.widget.Centre(direction = dir)
     def remote_ClientToScreen(self, (x, y)):
         return self.widget.ClientToScreenXY(x, y)
-    def remote_SetBackgroundColour(self, colour):
-        return self.widget.SetBackgroundColour(colour)
-
+    def remote_setBackgroundColour(self, colour):
+        self.widget.SetBackgroundColour(colour)
+#        self.widget.Refresh()
+    
 class TopLevelWindowReference(WindowReference):
     def _destroy(self):
         """Check to see if this is the last window open (for this app) and if so, call shutdown on the RemoteApplicationHandler instance.

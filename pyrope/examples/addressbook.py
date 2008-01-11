@@ -63,6 +63,7 @@ class AddressBookFrame(Frame):
     def clearControls(self):
         self.name.value = ""
         self.email.value = ""
+
 class AddressBookApplication(Application):
     def __init__(self):
         Application.__init__(self, "Address Book", description="A basic address book application.")
