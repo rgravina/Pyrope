@@ -12,7 +12,7 @@ entries=[AddressBookEntry("Robert Gravina", "robert@gravina.com"),
 
 class AddressBookFrame(Frame):
     def __init__(self, run, parent):
-        Frame.__init__(self, run, parent, title=u"Address Book", sizerType="vertical")
+        Frame.__init__(self, run, parent, title="Address Book", sizerType="vertical")
 
         #left panel - list of address book entries
         listPanel = Panel(run, self, sizerType="horizontal")
@@ -20,21 +20,21 @@ class AddressBookFrame(Frame):
         self.list.bind(ListBoxEvent, self.onListBoxSelect)
         #right panel - address book entry form
         rightPanel = Panel(run, listPanel, sizerType="form")
-        Label(run, rightPanel, value=u"Name")
+        Label(run, rightPanel, value="Name")
         self.name = TextBox(run, rightPanel, size=(160,-1))
-        Label(run, rightPanel, value=u"Email")
+        Label(run, rightPanel, value="Email")
         self.email = TextBox(run, rightPanel, size=(160,-1))
 
         #buttons
         buttonPanel = Panel(run, self, sizerType="horizontal")
-        self.addButton = Button(run, buttonPanel, value=u"+")
+        self.addButton = Button(run, buttonPanel, value="+")
         self.addButton.bind(ButtonEvent, self.onAddButton)
-        self.deleteButton = Button(run, buttonPanel, value=u"-")
+        self.deleteButton = Button(run, buttonPanel, value="-")
         self.deleteButton.bind(ButtonEvent, self.onDeleteButton)
-        self.saveButton = Button(run, buttonPanel, value=u"Save")
+        self.saveButton = Button(run, buttonPanel, value="Save")
         self.saveButton.bind(ButtonEvent, self.onSave)
         
-        self.statusBar = StatusBar(run, self, fields={0:u"%d entires" % len(entries)})
+        self.statusBar = StatusBar(run, self, fields={0:"%d entires" % len(entries)})
 
     def onListBoxSelect(self, event):
         index = event.data
