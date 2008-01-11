@@ -8,8 +8,8 @@ class AddressBookEntry:
         self.email = email
         
 entries=[AddressBookEntry("Robert Gravina", "robert@gravina.com"), 
-         AddressBookEntry("Yukihiro Matsumoto", "yukihiro@ruby.org"),
-         AddressBookEntry("Guido van Rossum", "guido@python.org")]
+         AddressBookEntry("Guido van Rossum", "guido@python.org"),
+         AddressBookEntry("Yukihiro Matsumoto", "yukihiro@ruby.org")]
 
 class AddressBookFrame(Frame):
     def __init__(self, run, parent):
@@ -17,14 +17,14 @@ class AddressBookFrame(Frame):
 
         #left panel - list of address book entries
         listPanel = Panel(run, self, sizerType="horizontal")
-        self.list = ListBox(run, listPanel, choices=[entry.name for entry in entries], size=(150, 180))
+        self.list = ListBox(run, listPanel, choices=[entry.name for entry in entries], size=(170, 180))
         self.list.bind(ListBoxEvent, self.onListBoxSelect)
         #right panel - address book entry form
         rightPanel = Panel(run, listPanel, sizerType="form")
         Label(run, rightPanel, value=u"Name")
-        self.name = TextBox(run, rightPanel, size=(170,-1))
+        self.name = TextBox(run, rightPanel, size=(160,-1))
         Label(run, rightPanel, value=u"Email")
-        self.email = TextBox(run, rightPanel, size=(170,-1))
+        self.email = TextBox(run, rightPanel, size=(160,-1))
 
         #buttons
         buttonPanel = Panel(run, self, sizerType="horizontal")
