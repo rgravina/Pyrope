@@ -2,7 +2,7 @@ import wx
 from pyrope.server import Application
 from pyrope.model import *
  
-class AddressBookEntry:
+class AddressBookEntry(object):
     def __init__(self, name, email):
         self.name = name
         self.email = email
