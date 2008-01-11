@@ -250,7 +250,10 @@ class MenuItemReference(object):
         self.menuBarRef = menuBarRef
         self.widget = widget
     def onMenu(self, event):
-        self.menuBarRef.remote.callRemote("menuItemSelected", self.widget.GetId())
+        changeset = None
+        if self.menuBarRef.app.changeset:
+            changeset = self.menuBarRef.app.changeset
+        self.menuBarRef.remote.callRemote("menuItemSelected", self.widget.GetId(), changeset)
 
 class StatusBarReference(WindowReference):
     def remote_setFields(self, fields):

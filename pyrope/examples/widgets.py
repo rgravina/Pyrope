@@ -99,6 +99,7 @@ class DemoFrame(Frame):
     def onItem1(self):
         self.label.label = u"Item 1 selected"
         self.statusBar.fields = {0:u"Item 1 selected"}
+        self.output.value += u"Dropdown selection: %s\n" % self.choice.choices[self.choice.selectedIndex]
 
     def onItem2(self):
         self.label.label = u"Item 2 selected"

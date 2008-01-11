@@ -652,7 +652,10 @@ class MenuBar(Window):
         return {}
     def _getOtherData(self):
         return {"form":self.form, "menus":self.menus}
-    def remote_menuItemSelected(self, id):
+    def remote_menuItemSelected(self, id, changeset=None):
+        #XXX:hack, do this in event handler of PyropeWidget somehow
+        if changeset:
+            changeset.apply()
         if self.itemHandlers.has_key(id):
             self.itemHandlers[id]()
 
