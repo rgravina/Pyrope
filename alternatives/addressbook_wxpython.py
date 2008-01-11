@@ -11,8 +11,9 @@ entries=[AddressBookEntry("Robert Gravina", "robert@gravina.com"),
          AddressBookEntry("Yukihiro Matsumoto", "yukihiro@ruby.org")]
 
 class AddressBookFrame(sc.SizedFrame):
-    def __init__(self, parent):
+    def __init__(self, parent, entries):
         sc.SizedFrame.__init__(self, parent,  wx.ID_ANY, "Address Book")
+        self.entries = entries
 
         #required by SizedControls - add controls to this panel, not the frame itself
         mainPanel = self.GetContentsPane()
@@ -46,7 +47,7 @@ class AddressBookFrame(sc.SizedFrame):
         
         self.statusBar = wx.StatusBar(self)
         self.statusBar.SetFieldsCount(1)
-        self.statusBar.SetStatusText("%d entires" % len(entries), 0)
+        self.statusBar.SetStatusText("%d entries" % len(entries), 0)
         self.SetStatusBar(self.statusBar)
 
         self.Fit()
@@ -54,13 +55,13 @@ class AddressBookFrame(sc.SizedFrame):
 
     def onListBoxSelect(self, event):
         index = event.GetSelection()
-        self.name.SetValue(entries[index].name)
-        self.email.SetValue(entries[index].email)
+        self.name.SetValue(self.entries[index].name)
+        self.email.SetValue(self.entries[index].email)
     
     def onSave(self, event):
         index = self.list.GetSelection()
-        entries[index].name = self.name.GetValue()
-        entries[index].email = self.email.GetValue()
+        self.entries[index].name = self.name.GetValue()
+        self.entries[index].email = self.email.GetValue()
         self.list.SetString(index, self.name.GetValue())
     
     def onAddButton(self, event):
@@ -71,7 +72,7 @@ class AddressBookFrame(sc.SizedFrame):
     
     def onDeleteButton(self, event):
         index = self.list.GetSelection()
-        del entries[index]
+        del self.entries[index]
         self.list.Delete(index)
         self.clearControls()
     
@@ -79,6 +80,7 @@ class AddressBookFrame(sc.SizedFrame):
         self.name.SetValue("")
         self.email.SetValue("")
 
-app = wx.PySimpleApp()
-addressBook = AddressBookFrame(None)
-app.MainLoop()
+if __name__ == '__main__':
+    app = wx.PySimpleApp()
+    addressBook = AddressBookFrame(None, entries)
+    app.MainLoop()

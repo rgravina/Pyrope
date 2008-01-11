@@ -1,15 +1,7 @@
 from pyrope.server import Application
 from pyrope.model import *
+from simple_model import *
  
-class AddressBookEntry(object):
-    def __init__(self, name, email):
-        self.name = name
-        self.email = email
-        
-entries=[AddressBookEntry("Robert Gravina", "robert@gravina.com"), 
-         AddressBookEntry("Guido van Rossum", "guido@python.org"),
-         AddressBookEntry("Yukihiro Matsumoto", "yukihiro@ruby.org")]
-
 class AddressBookFrame(Frame):
     def __init__(self, run, parent):
         Frame.__init__(self, run, parent, title="Address Book", sizerType="vertical")
@@ -34,7 +26,7 @@ class AddressBookFrame(Frame):
         self.saveButton = Button(run, buttonPanel, value="Save")
         self.saveButton.bind(ButtonEvent, self.onSave)
         
-        self.statusBar = StatusBar(run, self, fields={0:"%d entires" % len(entries)})
+        self.statusBar = StatusBar(run, self, fields=["%d entries" % len(entries)])
 
     def onListBoxSelect(self, event):
         index = event.data

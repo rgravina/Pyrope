@@ -484,8 +484,10 @@ class StatusBarBuilder(WidgetBuilder):
         localRef = WidgetBuilder.createLocalReference(self, app, widgetData)
         widget = localRef.widget
         widget.SetFieldsCount(len(widgetData.otherData["fields"]))
-        for index, text in widgetData.otherData["fields"].items():
+        index = 0
+        for text in widgetData.otherData["fields"]:
             widget.SetStatusText(text, index)
+            index += 1
         frame = widgetData.constructorData["parent"]
         frame.SetStatusBar(widget)
         return localRef

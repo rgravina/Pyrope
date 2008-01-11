@@ -708,9 +708,9 @@ class ToolBar(Window):
 
 class StatusBar(Window):
     type = "StatusBar"
-    def __init__(self, run, parent, fields={}):
+    def __init__(self, run, parent, fields=[]):
         Window.__init__(self, run, parent)
-        self._fields = fields    #index->text
+        self._fields = fields    #list of strings
     def _getConstructorData(self):
         return {"parent":self.parent}
     def _getOtherData(self):

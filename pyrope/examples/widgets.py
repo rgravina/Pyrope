@@ -66,7 +66,7 @@ class DemoFrame(Frame):
         bottomPanel = Panel(run, self, sizerType="vertical")
         self.output = TextBox(run, bottomPanel, value=u"Widget ouput...\n", size=(400,100), readonly=True, multiline=True)
 
-        self.statusBar = StatusBar(run, self, fields={0:u"demo online"})
+        self.statusBar = StatusBar(run, self, fields=[u"demo online"])
 
         splitter = Splitter(run, self, minimumPaneSize=20, liveUpdate=True)
         splitterPanel1 = Panel(run, splitter, sizerType="vertical")
@@ -98,12 +98,10 @@ class DemoFrame(Frame):
         
     def onItem1(self):
         self.label.label = u"Item 1 selected"
-        self.statusBar.fields = {0:u"Item 1 selected"}
         self.output.value += u"Dropdown selection: %s\n" % self.choice.choices[self.choice.selectedIndex]
 
     def onItem2(self):
         self.label.label = u"Item 2 selected"
-        self.statusBar.fields = {0:u"Item 2 selected"}
     
     def onText(self, event):
         self.label.label = self.text.value
