@@ -1,6 +1,14 @@
 from pyrope.server import Application
 from pyrope.model import *
-from simple_model import *
+
+class AddressBookEntry(object):
+    def __init__(self, name, email):
+        self.name = name
+        self.email = email
+        
+entries=[AddressBookEntry("Robert Gravina", "robert@gravina.com"), 
+         AddressBookEntry("Guido van Rossum", "guido@python.org"),
+         AddressBookEntry("Yukihiro Matsumoto", "yukihiro@ruby.org")]
  
 class AddressBookFrame(Frame):
     def __init__(self, run, parent):
