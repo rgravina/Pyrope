@@ -5,7 +5,8 @@ from addressbook_twisted_model import *
 
 entries=[AddressBookEntry("Robert Gravina", "robert@gravina.com"), 
          AddressBookEntry("Guido van Rossum", "guido@python.org"),
-         AddressBookEntry("Yukihiro Matsumoto", "yukihiro@ruby.org")]
+         AddressBookEntry("Yukihiro Matsumoto", "yukihiro@ruby.org"),
+         ]
     
 class AddressBookApplication(pb.Root):
     def remote_getEntries(self):
@@ -21,4 +22,4 @@ class AddressBookApplication(pb.Root):
         del entries[index]
 
 application = service.Application("Address Book")
-internet.TCPServer(8800, pb.PBServerFactory(AddressBookApplication())).setServiceParent(service.IServiceCollection(application))
+internet.TCPServer(8789, pb.PBServerFactory(AddressBookApplication())).setServiceParent(service.IServiceCollection(application))

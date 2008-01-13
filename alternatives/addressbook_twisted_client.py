@@ -42,6 +42,8 @@ class AddressBookApplication:
     def gotEntries(self, entries):
         self.addressBook.entries = entries
         self.addressBook.list.Set([entry.name for entry in entries])
+        self.statusBar.SetStatusText("%d entries" % len(entries), 0)
+        self.statusBar.Refresh()
         
 def main():
     #register the app

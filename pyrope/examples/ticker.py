@@ -7,11 +7,11 @@ class TickerFrame(Frame):
     draftDueDate = datetime.datetime(2008, 1, 16, 17, 00)
     thesisDueDate = datetime.datetime(2008, 1, 30, 17, 00)
     def __init__(self, run, parent):
-        Frame.__init__(self, run, parent, title=u"Ticker", sizerType="vertical", size=(300,210))
-        Label(run, self, value=u"Thesis DRAFT is due in:")
-        self.labelDraftTime = Label(run, self, value=self._getDraftDiffStr())
-        Line(run, self, size=(300,-1))
-        Label(run, self, value=u"Thesis FINAL is due in:")
+        Frame.__init__(self, run, parent, title=u"Ticker", sizerType="vertical", size=(300,120))
+#        Label(run, self, value=u"Thesis DRAFT is due in:")
+#        self.labelDraftTime = Label(run, self, value=self._getDraftDiffStr())
+#        Line(run, self, size=(300,-1))
+        Label(run, self, value=u"Thesis is due in:")
         self.labelThesisTime = Label(run, self, value=self._getThesisDiffStr())
         self.btnOK = Button(run, self, value=u"Oh No!")
         self.btnOK.bind(ButtonEvent, self.onButton)
@@ -25,7 +25,7 @@ class TickerFrame(Frame):
         self.loop.stop()
         
     def updateClock(self):
-        self.labelDraftTime.label=self._getDraftDiffStr()
+#        self.labelDraftTime.label=self._getDraftDiffStr()
         self.labelThesisTime.label=self._getThesisDiffStr()
 
     def _getDiffStr(self, dueDate):
