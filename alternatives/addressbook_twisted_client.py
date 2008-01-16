@@ -13,6 +13,8 @@ class TwistedAddressBookFrame(AddressBookFrame):
         index = self.list.GetSelection()
         self.entries[index].name = self.name.GetValue()
         self.entries[index].email = self.email.GetValue()
+        self.entries[index].phone = self.phone.GetValue()
+        self.entries[index].address = self.address.GetValue()
         self.remote.callRemote("save", index, self.entries[index]).addCallback(_saved)
 
     def onAddButton(self, event):
@@ -42,8 +44,8 @@ class AddressBookApplication:
     def gotEntries(self, entries):
         self.addressBook.entries = entries
         self.addressBook.list.Set([entry.name for entry in entries])
-        self.statusBar.SetStatusText("%d entries" % len(entries), 0)
-        self.statusBar.Refresh()
+        self.addressBook.statusBar.SetStatusText("%d entries" % len(entries), 0)
+        self.addressBook.statusBar.Refresh()
         
 def main():
     #register the app

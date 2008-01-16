@@ -3,10 +3,23 @@ from twisted.internet import reactor
 from twisted.spread import pb
 from addressbook_twisted_model import *
 
-entries=[AddressBookEntry("Robert Gravina", "robert@gravina.com"), 
-         AddressBookEntry("Guido van Rossum", "guido@python.org"),
-         AddressBookEntry("Yukihiro Matsumoto", "yukihiro@ruby.org"),
-         ]
+entries=[]
+for i in range(2):
+    entries.extend((AddressBookEntry("Robert Gravina", "robert@gravina.com", 
+                          "090 1234 5678", 
+                          "123 Sample St.\nSample City\nSample Country"), 
+         AddressBookEntry("Guido van Rossum", "guido@python.org", 
+                          "090 1234 5678", 
+                          "123 Sample St.\nSample City\nSample Country"),
+         AddressBookEntry("Yukihiro Matsumoto", "yukihiro@ruby.org", 
+                          "090 1234 5678", 
+                          "123 Sample St.\nSample City\nSample Country"),
+          AddressBookEntry("Yukihiro Matsumoto", "yukihiro@ruby.org", 
+                          "090 1234 5678", 
+                          "123 Sample St.\nSample City\nSample Country"),
+         AddressBookEntry("Yukihiro Matsumoto", "yukihiro@ruby.org", 
+                          "090 1234 5678", 
+                          "123 Sample St.\nSample City\nSample Country")))
     
 class AddressBookApplication(pb.Root):
     def remote_getEntries(self):
@@ -16,7 +29,7 @@ class AddressBookApplication(pb.Root):
         entries[index] = entry
 
     def remote_add(self):
-        entries.append(AddressBookEntry("", ""))
+        entries.append(AddressBookEntry())
 
     def remote_delete(self, index):
         del entries[index]
