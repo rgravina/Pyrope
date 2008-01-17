@@ -247,7 +247,7 @@ class Frame(Window):
              "closeBox":wx.CLOSE_BOX,
              "stayOnTop":wx.STAY_ON_TOP,
              "resizeable":wx.RESIZE_BORDER}
-    def __init__(self, run, parent, title=u"", position=DefaultPosition, size=DefaultSize, sizerType="horizontal", 
+    def __init__(self, run, parent=None, title=u"", position=DefaultPosition, size=DefaultSize, sizerType="horizontal", 
                  minimiseBox=True, maximiseBox=True, closeBox=True, stayOnTop=True, systemMenu=True, resizeable=True):
         Window.__init__(self, run, parent, position=position, size=size)
         self.title = title
@@ -274,7 +274,7 @@ class Frame(Window):
 
 class Dialog(Window):
     type = "Dialog"
-    def __init__(self, run, parent, title=u"", position=DefaultPosition, size=DefaultSize):
+    def __init__(self, run, parent=None, title=u"", position=DefaultPosition, size=DefaultSize):
         Window.__init__(self, run, parent, position=position, size=size)
         self.title = title
     def _getConstructorData(self):
@@ -286,7 +286,7 @@ class Dialog(Window):
 
 class MessageDialog(Window):
     type = "MessageDialog"
-    def __init__(self, run, parent, message, caption=u"Message Box", position=DefaultPosition):
+    def __init__(self, run, parent=None, message=u"", caption=u"Message Box", position=DefaultPosition):
         Window.__init__(self, run, parent, position=position)
         self.caption = caption
         self.message = message
