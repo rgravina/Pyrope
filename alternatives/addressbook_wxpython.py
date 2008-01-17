@@ -13,11 +13,11 @@ entries=[AddressBookEntry("Robert Gravina", "robert@gravina.com", "090 1234 5678
          AddressBookEntry("Yukihiro Matsumoto", "yukihiro@ruby.org", "090 1234 5678", "123 Sample St.\nSample City\nSample Country"),
          AddressBookEntry("Robert Gravina", "robert@gravina.com", "090 1234 5678", "123 Sample St.\nSample City\nSample Country"), 
          AddressBookEntry("Guido van Rossum", "guido@python.org", "090 1234 5678", "123 Sample St.\nSample City\nSample Country"),
-         AddressBookEntry("Yukihiro Matsumoto", "yukihiro@ruby.org", "090 1234 5678", "123 Sample St.\nSample City\nSample Country"),
          AddressBookEntry("Robert Gravina", "robert@gravina.com", "090 1234 5678", "123 Sample St.\nSample City\nSample Country"), 
          AddressBookEntry("Guido van Rossum", "guido@python.org", "090 1234 5678", "123 Sample St.\nSample City\nSample Country"),
          AddressBookEntry("Yukihiro Matsumoto", "yukihiro@ruby.org", "090 1234 5678", "123 Sample St.\nSample City\nSample Country"),
-         AddressBookEntry("Robert Gravina", "robert@gravina.com", "090 1234 5678", "123 Sample St.\nSample City\nSample Country")]
+         AddressBookEntry("Robert Gravina", "robert@gravina.com", "090 1234 5678", "123 Sample St.\nSample City\nSample Country"), 
+         AddressBookEntry("Guido van Rossum", "guido@python.org", "090 1234 5678", "123 Sample St.\nSample City\nSample Country")]
 
 class AddressBookFrame(sc.SizedFrame):
     def __init__(self, parent, entries):

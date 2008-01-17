@@ -4,7 +4,7 @@ from twisted.spread import pb
 from addressbook_twisted_model import *
 
 entries=[]
-for i in range(2):
+for i in range(200):
     entries.extend((AddressBookEntry("Robert Gravina", "robert@gravina.com", 
                           "090 1234 5678", 
                           "123 Sample St.\nSample City\nSample Country"), 
@@ -14,16 +14,19 @@ for i in range(2):
          AddressBookEntry("Yukihiro Matsumoto", "yukihiro@ruby.org", 
                           "090 1234 5678", 
                           "123 Sample St.\nSample City\nSample Country"),
-          AddressBookEntry("Yukihiro Matsumoto", "yukihiro@ruby.org", 
+         AddressBookEntry("Robert Gravina", "robert@gravina.com", 
                           "090 1234 5678", 
-                          "123 Sample St.\nSample City\nSample Country"),
-         AddressBookEntry("Yukihiro Matsumoto", "yukihiro@ruby.org", 
+                          "123 Sample St.\nSample City\nSample Country"), 
+         AddressBookEntry("Guido van Rossum", "guido@python.org", 
                           "090 1234 5678", 
                           "123 Sample St.\nSample City\nSample Country")))
     
 class AddressBookApplication(pb.Root):
     def remote_getEntries(self):
-        return entries
+        return [entry.name for entry in entries]
+
+    def remote_getEntry(self, index):
+        return entries[index]
 
     def remote_save(self, index, entry):
         entries[index] = entry
