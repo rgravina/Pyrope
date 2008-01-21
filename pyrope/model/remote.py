@@ -571,28 +571,43 @@ class RemoteApplicationHandler(pb.Referenceable):
 
     def handleEvent(self, widget, event, changeset=None):
         """This gets called when an event occurs that the server is interested in. We send the server the event data and 
-        also the changes that have occurred since the last change."""
+        also the changes that have occurred since the last change. It keeps a list of pending events, and if one is still 
+        being executed on the server, it adds the event to the list and returns. When an event completes, it fires of the 
+        next event in that list.
+        
+        When called from widgets handling events, the changet will not be supplied, and it will be taken from this instnace. 
+        When called from this handler after an event has fired, the changeset will be supplied."""
         def _done(result):
-            #if there are pending events, process the first in the list (like a FIFO queue)
+            #we are done with the event
+            del self.pendingEvents[0]
+
+            #if there are pending events, pop end of list and process (like a FIFO queue)
             if self.pendingEvents:
-                widget, event, changeset = self.pendingEvents[0]
-                del self.pendingEvents[0]
-                self.handleEvent(widget, event, changeset)
-        
-        #if there are events still being processed, add this to chain and return
-        #otherwise, we can process this event
-        if self.pendingEvents:
-            self.pendingEvents.append(widget, event, copy.copy(changeset))
-            self.changeset.clear()
-            return
-        
+                widget, eventData, changeset = self.pendingEvents[0]
+                #handle event
+                widget.remote.callRemote("handleEvent", eventData, changeset).addCallback(_done)
+
         #get event data for this event type
         eventData = EventFactory.create(widget.remote, event)
 
-        #send event and changeset data
-        if not self.changeset.isEmpty():
-            changeset = self.changeset       
+        #get changeset data, if it wasn't supplied to this function (i.e. from the event queue)
+        if not changeset and not self.changeset.isEmpty():
+            changeset = copy.copy(self.changeset)
+        
+        #if there are events still being processed, add this to chain and return
+        if self.pendingEvents:
+            #add to head of list
+            self.pendingEvents.append((widget, eventData, changeset))
+            self.changeset.clear()
+            return
+        #otherwise, we can process this event
+
+        #add this event to the pending events queue
+        self.pendingEvents.append((widget, eventData, changeset))
+
+        #handle event
         widget.remote.callRemote("handleEvent", eventData, changeset).addCallback(_done)
+
         #clear changeset now that server knows about it
         self.changeset.clear()
         

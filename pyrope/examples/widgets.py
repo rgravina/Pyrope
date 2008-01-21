@@ -114,8 +114,8 @@ class DemoFrame(Frame):
         return True
 
     def onOKButton(self, event):
-        self.output.value += u"waitig 5 secs...\n"
-        sleep(5)
+#        self.output.value += u"waitig 5 secs...\n"
+#        sleep(5)
         self.text.value = u"Clicked OK!"
         self.lb.setChoice(0, "1")
         
