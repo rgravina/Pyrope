@@ -1,11 +1,10 @@
 from pyrope.server import Application
-from pyrope.model import *
+from pyrope.model import Frame
 
 class HelloWorldApplication(Application):
     def __init__(self):
-        Application.__init__(self, "Hello World", description="A simple Hello \
-        World application for Pyrope. Displays one frame with the title set \
-        to \"Hello World\".")
+        Application.__init__(self, "Hello World", 
+                             description="Hello World! in Pyrope")
     def start(self, run):
         def _done(result):
             frame.show()

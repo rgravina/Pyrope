@@ -7,6 +7,7 @@ from twisted.python import log
 from twisted.spread.flavors import NoSuchMethod
 from pyrope.model.shared import *
 from pyrope.model.events import *
+import copy
 
 from zope.interface import Interface, Attribute, implements
 
@@ -116,12 +117,10 @@ class WindowReference(PyropeReferenceable):
         for event in self.changeEvents:
             self.widget.Bind(event, self.recordChange)
 
+    #recording changes
     def recordChange(self, event):
-        """Records change in changeset instance, and passes the event on to the next handler."""
-        propertyValueTuple = self.getChangeData(event)
-        if propertyValueTuple:
-            self.app.changeset.addChange(self.remote, propertyValueTuple[0], propertyValueTuple[1])
-        event.Skip()
+        #let the application class handle it
+        self.app.recordChange(self, event)
 
     def getChangeData(self, event):
         """Given an event instance, this method should figure out what property should be updated with what data.
@@ -142,19 +141,9 @@ class WindowReference(PyropeReferenceable):
             
     #event handling
     def handleEvent(self, event):
-        """This gets called when an event occurs that the server is interested in. We send the server the event data and 
-        also the changes that have occurred since the last change."""
-        #get event data for this event type
-        eventData = EventFactory.create(self.remote, event)
-        #send event and changeset data
-        changeset = None
-        if not self.app.changeset.isEmpty():
-            changeset = self.app.changeset
-        self.remote.callRemote("handleEvent", eventData, changeset)
-        #clear changeset now that server knows about it
-        #TODO: return a Deferred, and fire it off when server-side handleEvent is done, so the changeset is cleared only when done
-        self.app.changeset.clear()
-    
+        #let the application class handle it
+        self.app.handleEvent(self, event)
+
     #other methods
     def remote_Centre(self, direction, centreOnScreen): 
         dir = direction
@@ -250,6 +239,7 @@ class MenuItemReference(object):
         self.menuBarRef = menuBarRef
         self.widget = widget
     def onMenu(self, event):
+        #XXX:hack! move this into RemoteApplicationHandler
         changeset = None
         if self.menuBarRef.app.changeset:
             changeset = self.menuBarRef.app.changeset
@@ -559,13 +549,52 @@ class RemoteApplicationHandler(pb.Referenceable):
         self.topLevelWindows = []    #wxWidgets
         self.widgets = {}            #RemoteReference (Pyrope Widget) -> wxWidget
         self.changeset = ClientChangeset() #when changes are pending, this should hold them
+        self.pendingEvents = []            #list of events which are still being processed by server
+
     def shutdown(self):
+        """Called by application when last window is closed for that application."""
         def _shutdown(result):
             self.appPresenter.shutdownApplication(self.app)
         return self.app.server.callRemote("shutdownApplication", self).addCallback(_shutdown)
+    
     def remote_createWidget(self, widgetData):
+        """Called by server when it wants to create a new widget."""
         #create widget and local proxy and return pb.RemoteReference to server
         return WidgetFactory.create(self, widgetData)
 
+    def recordChange(self, widget, event):
+        """Records change in changeset instance, and passes the event on to the next handler."""
+        propertyValueTuple = widget.getChangeData(event)
+        if propertyValueTuple:
+            self.changeset.addChange(widget.remote, propertyValueTuple[0], propertyValueTuple[1])
+        event.Skip()
+
+    def handleEvent(self, widget, event, changeset=None):
+        """This gets called when an event occurs that the server is interested in. We send the server the event data and 
+        also the changes that have occurred since the last change."""
+        def _done(result):
+            #if there are pending events, process the first in the list (like a FIFO queue)
+            if self.pendingEvents:
+                widget, event, changeset = self.pendingEvents[0]
+                del self.pendingEvents[0]
+                self.handleEvent(widget, event, changeset)
+        
+        #if there are events still being processed, add this to chain and return
+        #otherwise, we can process this event
+        if self.pendingEvents:
+            self.pendingEvents.append(widget, event, copy.copy(changeset))
+            self.changeset.clear()
+            return
+        
+        #get event data for this event type
+        eventData = EventFactory.create(widget.remote, event)
+
+        #send event and changeset data
+        if not self.changeset.isEmpty():
+            changeset = self.changeset       
+        widget.remote.callRemote("handleEvent", eventData, changeset).addCallback(_done)
+        #clear changeset now that server knows about it
+        self.changeset.clear()
+        
 class PyropeClientHandler(pb.Referenceable):
     pass

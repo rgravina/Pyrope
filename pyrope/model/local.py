@@ -23,7 +23,7 @@ class RunningApplication(object):
         self.perspective = perspective     #users perpective 
         self.handler = handler             #client-side application handler
         self.widgets = []                  #widgets in this instance
-    
+        
 class Application(pb.Viewable):
     """Base class for user applications. Users should subclass this and override at least L{start}."""
     implements(IApplication)
@@ -99,7 +99,8 @@ class PyropeWidget(pb.Referenceable, object):
             # handlers return True if they want event to propegate
             if not handler(event):
                 break
-
+        
+            
 class Window(PyropeWidget):
     type = "Window"
     def __init__(self, run, parent, position=DefaultPosition, size=DefaultSize):

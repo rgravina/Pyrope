@@ -2,6 +2,7 @@ from pyrope.server import Application
 from pyrope.model import *
 from pyrope.model.events import *
 from twisted.internet.defer import inlineCallbacks
+from time import sleep
 
 class DemoFrame(Frame):
     def __init__(self, run, parent):
@@ -91,6 +92,7 @@ class DemoFrame(Frame):
 #        notebook.bind(NotebookPageChangedEvent, self.onNotebookChanged)
 
     def onNotebookChanging(self, event):
+        
         self.label.label = u"Notebook changing from %d to %d" % (event.data["oldSelection"], event.data["selection"])
         
     def onNotebookChanged(self, event):
@@ -112,6 +114,8 @@ class DemoFrame(Frame):
         return True
 
     def onOKButton(self, event):
+        self.output.value += u"waitig 5 secs...\n"
+        sleep(5)
         self.text.value = u"Clicked OK!"
         self.lb.setChoice(0, "1")
         
