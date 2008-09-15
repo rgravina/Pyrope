@@ -1,6 +1,6 @@
 """The Remote (i.e. usually client-side) model."""
 import wx
-import wxaddons.sized_controls as sc
+import wx.lib.sized_controls as sc
 from wx import ImageFromStream, BitmapFromImage
 import cStringIO
 from twisted.python import log
