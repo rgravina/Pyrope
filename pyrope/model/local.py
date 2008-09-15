@@ -490,6 +490,19 @@ class ListBox(Window, ControlWithItemsMixin):
         d["choices"] = self._choices
         return d
 
+class ListCtrl(Window, ControlWithItemsMixin):
+    type = "ListCtrl"
+    _props = {"singleSelection":wx.LC_SINGLE_SEL}
+    def __init__(self, run, parent, choices=[], position=DefaultPosition, size=DefaultSize,
+                 singleSelection=False):
+        Window.__init__(self, run, parent, position=position, size=size)
+        self._selectedIndex = None
+        self._choices = choices
+        self._addStyleVal(singleSelection, "singleSelection")
+    def _getConstructorData(self):
+        d = Window._getConstructorData(self)
+        d["choices"] = self._choices
+        return d
 
 class CheckListBox(ListBox):
     type = "CheckListBox"

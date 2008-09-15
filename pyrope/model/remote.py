@@ -229,6 +229,12 @@ class ListBoxReference(ControlWithItemsReference):
     def getChangeData(self, event):
         if event.GetEventType() == wx.wx.EVT_LISTBOX.typeId:
             return ("selectedIndex", self.widget.GetSelection())
+
+class ListCtrlReference(ControlWithItemsReference):
+    changeEvents = [wx.EVT_LIST_ITEM_SELECTED]
+    def getChangeData(self, event):
+        if event.GetEventType() == wx.wx.EVT_LIST_ITEM_SELECTED.typeId:
+            return ("selectedIndex", self.widget.GetSelection())
      
 class MenuBarReference(WindowReference):
     def onMenu(self, event):
@@ -394,6 +400,10 @@ class SliderBuilder(WidgetBuilder):
 class ListBoxBuilder(WidgetBuilder):
     widgetClass = wx.ListBox
     referenceClass = ListBoxReference
+
+class ListCtrlBuilder(WidgetBuilder):
+    widgetClass = wx.ListCtrl
+    referenceClass = ListCtrlReference
 
 class CheckListBoxBuilder(WidgetBuilder):
     widgetClass = wx.CheckListBox
