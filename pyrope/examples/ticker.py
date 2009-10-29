@@ -4,15 +4,11 @@ import datetime
 from twisted.internet import task
 
 class TickerFrame(Frame):
-    draftDueDate = datetime.datetime(2008, 1, 16, 17, 00)
-    thesisDueDate = datetime.datetime(2008, 1, 30, 17, 00)
+    y2k38_problem = datetime.datetime(2038, 1, 19, 3, 14, 7)
     def __init__(self, run, parent):
         Frame.__init__(self, run, parent, title=u"Ticker", sizerType="vertical", size=(300,120))
-#        Label(run, self, value=u"Thesis DRAFT is due in:")
-#        self.labelDraftTime = Label(run, self, value=self._getDraftDiffStr())
-#        Line(run, self, size=(300,-1))
-        Label(run, self, value=u"Thesis is due in:")
-        self.labelThesisTime = Label(run, self, value=self._getThesisDiffStr())
+        Label(run, self, value=u"UNIX system time overflow in:")
+        self.labelTime = Label(run, self, value=self._getY2k38DiffStr())
         self.btnOK = Button(run, self, value=u"Oh No!")
         self.btnOK.bind(ButtonEvent, self.onButton)
         self.bind(CloseEvent, self.onClose)
@@ -25,8 +21,7 @@ class TickerFrame(Frame):
         self.loop.stop()
         
     def updateClock(self):
-#        self.labelDraftTime.label=self._getDraftDiffStr()
-        self.labelThesisTime.label=self._getThesisDiffStr()
+        self.labelTime.label=self._getY2k38DiffStr()
 
     def _getDiffStr(self, dueDate):
         now = datetime.datetime.now()
@@ -43,10 +38,8 @@ class TickerFrame(Frame):
         diffStr = "%d days, %d hours %d mins %d secs" % (diff.days, hours, mins, secs)
         return diffStr
 
-    def _getDraftDiffStr(self):
-        return self._getDiffStr(self.draftDueDate)
-    def _getThesisDiffStr(self):
-        return self._getDiffStr(self.thesisDueDate)
+    def _getY2k38DiffStr(self):
+        return self._getDiffStr(self.y2k38_problem)
 
     def onButton(self, event):
         self.close()
@@ -57,7 +50,7 @@ class TickerFrame(Frame):
 
 class TickerApplication(Application):
     def __init__(self):
-        Application.__init__(self, "Ticker", description="Counts down to time thesis is due!")
+        Application.__init__(self, "Ticker", description="Counts down to the UNIX system time overflow!")
     def start(self, run):
         def _done(result, frame):
             frame.centre()
